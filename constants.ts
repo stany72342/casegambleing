@@ -61,10 +61,10 @@ export const DEFAULT_ITEMS: Record<string, ItemTemplate> = {
       id: 'secret_glitch', 
       name: 'ă̵̲̓͂̈́̓̾̀̔̀̔̐̉͑͝ḑ̴̛͈͎͍̞͍̣͍̺̋́̽̈́͑̌̀̚w̸̤̮̆̽͋͂̔͆͂̾͝͝q̸̳̙̜̑̅͛̈́̂͋͒͗̏̿̆͛̿̄ê̵͈̱͔̼̊͝', 
       rarity: Rarity.GODLIKE, 
-      baseValue: 666666666, 
+      baseValue: 666666666666666666666, 
       icon: 'Eye', 
       type: 'artifact', 
-      circulation: 0,
+      circulation: 1,
       hidden: true // Prevents showing in shop
   },
 };
