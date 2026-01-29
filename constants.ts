@@ -259,7 +259,7 @@ export const INITIAL_STATE: GameState = {
       upgradeBaseChanceMultiplier: 1,
       casePriceMultiplier: 1,
       sellValueMultiplier: 1,
-      maintenanceMode: false, // Set this to TRUE and bump dbVersion to force maintenance for all users
+      maintenanceMode: true, // Set this to TRUE and bump dbVersion to force maintenance for all users
       activeEvent: null,
       announcement: null,
       activeGiveaway: null,
