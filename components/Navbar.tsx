@@ -14,7 +14,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab, gameState, o
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [showInbox, setShowInbox] = useState(false);
   const [showUpdates, setShowUpdates] = useState(false);
-
+  
   const xpForNext = Math.floor(XP_PER_LEVEL_BASE * Math.pow(XP_MULTIPLIER, gameState.level - 1));
   const progress = Math.min(100, (gameState.xp / xpForNext) * 100);
 
@@ -27,7 +27,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab, gameState, o
     }).format(num);
   };
 
-  const isCasinoActive = ['casino', 'blackjack', 'roulette', 'mines', 'slots'].includes(currentTab);
+  const isCasinoActive = ['casino', 'blackjack', 'roulette', 'mines', 'slots', 'coinflip', 'highlow'].includes(currentTab);
 
   const navItems = [
     { id: 'cases', label: 'Cases', icon: LayoutDashboard },
@@ -49,7 +49,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab, gameState, o
             <div className="w-8 h-8 bg-gradient-to-tr from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center shadow-lg shadow-orange-500/20">
               <Trophy className="w-5 h-5 text-white" />
             </div>
-            <span className="font-bold text-xl tracking-tight text-white hidden sm:block">Case<span className="text-yellow-400">Clicker</span></span>
+            <span className="font-bold text-xl tracking-tight text-white hidden sm:block">Case<span className="text-yellow-400">Gambler</span></span>
           </div>
 
           {/* Desktop Nav */}
@@ -72,6 +72,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab, gameState, o
 
           {/* Stats Display */}
           <div className="flex items-center gap-3">
+             
              {/* News Icon */}
              <button onClick={() => setShowUpdates(!showUpdates)} className="p-2 text-slate-400 hover:text-white transition-colors relative">
                  <Bell size={20} />

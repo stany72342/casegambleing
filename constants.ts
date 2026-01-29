@@ -2,10 +2,6 @@ import { Case, ItemTemplate, Rarity, GameState } from './types';
 
 // STATIC DEFAULTS (Loaded into state on first run)
 export const DEFAULT_ITEMS: Record<string, ItemTemplate> = {
-  // POTIONS
-  'small_luck_potion': { id: 'small_luck_potion', name: 'Small Luck Potion', rarity: Rarity.UNCOMMON, baseValue: 500, icon: 'FlaskConical', type: 'potion', circulation: 999999 },
-  'large_luck_potion': { id: 'large_luck_potion', name: 'Large Luck Potion', rarity: Rarity.EPIC, baseValue: 2500, icon: 'FlaskRound', type: 'potion', circulation: 999999 },
-
   // Common
   'rusty_knife': { id: 'rusty_knife', name: 'Rusty Knife', rarity: Rarity.COMMON, baseValue: 5, icon: 'Knife', type: 'equipment', circulation: 1200000 },
   'old_boot': { id: 'old_boot', name: 'Old Boot', rarity: Rarity.COMMON, baseValue: 2, icon: 'Footprints', type: 'equipment', circulation: 1500000 },
@@ -84,9 +80,8 @@ export const DEFAULT_CASES: Case[] = [
     contains: [
       { templateId: 'rusty_knife', weight: 40 },
       { templateId: 'old_boot', weight: 35 },
-      { templateId: 'iron_sword', weight: 15 },
-      { templateId: 'steel_dagger', weight: 8 },
-      { templateId: 'dragon_scale', weight: 2 },
+      { templateId: 'rock', weight: 15 }, 
+      { templateId: 'iron_sword', weight: 10 },
     ]
   },
   {
@@ -116,7 +111,7 @@ export const DEFAULT_CASES: Case[] = [
       { templateId: 'wizard_hat', weight: 30 },
       { templateId: 'mercenary_jack', weight: 20 },
       { templateId: 'cyber_ninja', weight: 9 },
-      { templateId: 'space_marine', weight: 1 },
+      { templateId: 'laser_pistol', weight: 1 }, 
     ]
   },
   {
@@ -146,7 +141,7 @@ export const DEFAULT_CASES: Case[] = [
       { templateId: 'golden_chalice', weight: 30 },
       { templateId: 'emerald_gem', weight: 20 },
       { templateId: 'kings_crown', weight: 9 },
-      { templateId: 'time_traveler', weight: 1 },
+      { templateId: 'infinity_stone', weight: 1 }, 
     ]
   },
   {
@@ -176,7 +171,7 @@ export const DEFAULT_CASES: Case[] = [
         { templateId: 'cyber_katana', weight: 30 },
         { templateId: 'omega_core', weight: 20 },
         { templateId: 'ancient_dragon', weight: 9 },
-        { templateId: 'cc3', weight: 1 }
+        { templateId: 'dark_matter_essence', weight: 1 }, 
     ]
   },
   {
@@ -240,7 +235,7 @@ export const FAKE_MESSAGES = [
 ];
 
 export const INITIAL_STATE: GameState = {
-  dbVersion: 4, // BUMPED TO 4 to force update on existing clients
+  dbVersion: 8, // Bumped to 8 for removal of potions
   username: null,
   role: 'USER',
   isAdmin: false, 
@@ -322,7 +317,7 @@ export const INITIAL_STATE: GameState = {
   
   // Initial Updates
   updates: [
-      { id: '1', version: 'v5.1.0', title: 'Unlocked Update', description: 'Removed all level requirements and keys! Play freely.', date: Date.now(), author: 'System' }
+      { id: '1', version: 'v6.1.0', title: 'Balance Update', description: 'Removed experimental potion system. Returned to classic gameplay.', date: Date.now(), author: 'System' }
   ],
   
   // Fake Reports
@@ -333,10 +328,10 @@ export const INITIAL_STATE: GameState = {
   
   // Fake DB
   userDatabase: {
-      'NinjaSlayer99': { username: 'NinjaSlayer99', role: 'USER', banned: false, balance: 15400000, level: 42, inventoryCount: 84, lastLogin: '2 mins ago', luckMultiplier: 1, tags: ['VIP', 'WHALE'], inbox: [], stats: { totalSpent: 500000, totalValue: 15400000, casesOpened: 1200, sessionStart: Date.now() } },
-      'KaiCenatFan': { username: 'KaiCenatFan', role: 'USER', banned: false, balance: 12000000, level: 38, inventoryCount: 120, lastLogin: '5 hours ago', luckMultiplier: 0.8, tags: [], inbox: [], stats: { totalSpent: 200000, totalValue: 12000000, casesOpened: 800, sessionStart: Date.now() - 3600000 } },
-      'CaseOpenerPro': { username: 'CaseOpenerPro', role: 'USER', banned: false, balance: 8500000, level: 35, inventoryCount: 200, lastLogin: '1 day ago', luckMultiplier: 1.2, tags: ['TESTER'], inbox: [], stats: { totalSpent: 1000000, totalValue: 8500000, casesOpened: 5000, sessionStart: Date.now() - 86400000 } },
-      'LuckyStrike': { username: 'LuckyStrike', role: 'USER', banned: false, balance: 2100000, level: 20, inventoryCount: 45, lastLogin: 'Just now', luckMultiplier: 1.1, tags: [], inbox: [], stats: { totalSpent: 50000, totalValue: 2100000, casesOpened: 200, sessionStart: Date.now() } },
-      'RNG_God': { username: 'RNG_God', role: 'MOD', banned: false, balance: 5000000, level: 29, inventoryCount: 60, lastLogin: '1 min ago', luckMultiplier: 1.5, tags: ['VIP'], inbox: [], stats: { totalSpent: 100000, totalValue: 5000000, casesOpened: 600, sessionStart: Date.now() } },
+      'NinjaSlayer99': { username: 'NinjaSlayer99', role: 'USER', banned: false, balance: 15400000, level: 42, xp: 5000, premiumLevel: 2, inventoryCount: 84, lastLogin: '2 mins ago', luckMultiplier: 1, tags: ['VIP', 'WHALE'], inbox: [], stats: { totalSpent: 500000, totalValue: 15400000, casesOpened: 1200, sessionStart: Date.now() } },
+      'KaiCenatFan': { username: 'KaiCenatFan', role: 'USER', banned: false, balance: 12000000, level: 38, xp: 2000, premiumLevel: 0, inventoryCount: 120, lastLogin: '5 hours ago', luckMultiplier: 0.8, tags: [], inbox: [], stats: { totalSpent: 200000, totalValue: 12000000, casesOpened: 800, sessionStart: Date.now() - 3600000 } },
+      'CaseOpenerPro': { username: 'CaseOpenerPro', role: 'USER', banned: false, balance: 8500000, level: 35, xp: 8000, premiumLevel: 1, inventoryCount: 200, lastLogin: '1 day ago', luckMultiplier: 1.2, tags: ['TESTER'], inbox: [], stats: { totalSpent: 1000000, totalValue: 8500000, casesOpened: 5000, sessionStart: Date.now() - 86400000 } },
+      'LuckyStrike': { username: 'LuckyStrike', role: 'USER', banned: false, balance: 2100000, level: 20, xp: 1200, premiumLevel: 0, inventoryCount: 45, lastLogin: 'Just now', luckMultiplier: 1.1, tags: [], inbox: [], stats: { totalSpent: 50000, totalValue: 2100000, casesOpened: 200, sessionStart: Date.now() } },
+      'RNG_God': { username: 'RNG_God', role: 'MOD', banned: false, balance: 5000000, level: 29, xp: 4500, premiumLevel: 2, inventoryCount: 60, lastLogin: '1 min ago', luckMultiplier: 1.5, tags: ['VIP'], inbox: [], stats: { totalSpent: 100000, totalValue: 5000000, casesOpened: 600, sessionStart: Date.now() } },
   }
 };

@@ -30,23 +30,25 @@ export const useGameState = () => {
     return () => clearTimeout(handler);
   }, [gameState, loaded]);
 
-  // Passive Income & Timers
+  // Passive Income Loop
   useEffect(() => {
       if (!loaded || !gameState.username) return;
       const interval = setInterval(() => {
           setGameState(prev => {
-               // Passive Income
-               let multiplier = 1;
-               if (prev.premiumLevel === 1) multiplier = 2; 
-               if (prev.premiumLevel === 2) multiplier = 50; 
-               const newBalance = prev.balance + (100 * multiplier);
+               // Calculate Multipliers for Passive Income
+               let levelMult = 1 + (prev.level * 0.05); // 5% per level
                
-               // Check Potion Expiry
+               let premiumMult = 1;
+               if (prev.premiumLevel === 1) premiumMult = 2; 
+               if (prev.premiumLevel === 2) premiumMult = 50; 
+               
+               const totalMult = levelMult;
+               const newBalance = prev.balance + Math.floor(100 * premiumMult * totalMult);
+               
+               // Sync Balance to DB immediately for consistency
                let newUserDB = { ...prev.userDatabase };
-               let currentUser = newUserDB[prev.username!];
-               if (currentUser && currentUser.luckExpiry && Date.now() > currentUser.luckExpiry) {
-                   currentUser.luckExpiry = undefined;
-                   currentUser.luckMultiplier = 1; // Reset to default
+               if (prev.username && newUserDB[prev.username]) {
+                   // No special pill logic here anymore
                }
 
                return { ...prev, balance: newBalance, userDatabase: newUserDB };
@@ -54,6 +56,27 @@ export const useGameState = () => {
       }, 60000); 
       return () => clearInterval(interval);
   }, [loaded, gameState.username, gameState.premiumLevel]);
+
+  // Helper to calculate current active multipliers
+  const getMultipliers = useCallback(() => {
+      const state = stateRef.current;
+      let xpMult = 1;
+      let luckMult = 1;
+      let valMult = 1;
+
+      // 1. Level Bonus (Value only)
+      valMult += (state.level * 0.05); 
+
+      // 2. Premium
+      if (state.premiumLevel >= 1) xpMult *= 2;
+      if (state.premiumLevel >= 2) xpMult *= 5;
+
+      // 3. Global Config
+      luckMult *= state.config.globalLuckMultiplier;
+      valMult *= state.config.sellValueMultiplier;
+
+      return { xp: xpMult, luck: luckMult, value: valMult };
+  }, []);
 
   // Scheduler & Security
   useEffect(() => {
@@ -120,13 +143,16 @@ export const useGameState = () => {
             banned: false,
             balance: prev.balance,
             level: prev.level,
+            xp: prev.xp,
+            premiumLevel: 0,
             inventoryCount: prev.inventory.length,
             lastLogin: new Date().toISOString(),
-            luckMultiplier: 1,
+            luckMultiplier: 1, 
             tags: [],
             inbox: [],
             stats: { totalSpent: 0, totalValue: 0, casesOpened: 0, sessionStart: Date.now() }
         };
+        
         return { 
             ...prev, 
             username,
@@ -134,6 +160,13 @@ export const useGameState = () => {
             isAdmin: effectiveRole === 'ADMIN' || effectiveRole === 'OWNER',
             rememberMe,
             balance: (effectiveRole === 'OWNER' || effectiveRole === 'ADMIN') ? 999999999 : (existingUser ? existingUser.balance : prev.balance),
+            
+            // Restore persistent states
+            level: existingUser ? existingUser.level : prev.level,
+            xp: existingUser ? (existingUser.xp || 0) : prev.xp,
+            isPremium: existingUser ? (existingUser.premiumLevel > 0) : false,
+            premiumLevel: existingUser ? (existingUser.premiumLevel || 0) : 0,
+
             userDatabase: { ...prev.userDatabase, [username]: newUserData },
             inbox: existingUser ? (existingUser.inbox || []) : []
         };
@@ -154,19 +187,33 @@ export const useGameState = () => {
        return { ...p, balance: p.balance - safeAmount };
   }), []);
 
-  const addXp = useCallback((a: number) => setGameState(p => {
-      let newXp = p.xp + a;
-      const xpForNext = Math.floor(XP_PER_LEVEL_BASE * Math.pow(XP_MULTIPLIER, p.level - 1));
-      let newLevel = p.level;
-      let leveledUp = false;
+  const addXp = useCallback((a: number) => {
+      const mults = getMultipliers();
+      setGameState(p => {
+          let newXp = p.xp + Math.floor(a * mults.xp);
+          const xpForNext = Math.floor(XP_PER_LEVEL_BASE * Math.pow(XP_MULTIPLIER, p.level - 1));
+          let newLevel = p.level;
+          let leveledUp = false;
 
-      if (newXp >= xpForNext) {
-          newLevel++;
-          newXp -= xpForNext;
-          leveledUp = true;
-      }
-      return { ...p, xp: newXp, level: newLevel, showLevelUp: leveledUp || p.showLevelUp };
-  }), []);
+          if (newXp >= xpForNext) {
+              newLevel++;
+              newXp -= xpForNext;
+              leveledUp = true;
+          }
+
+          // SYNC TO DB
+          const newDB = { ...p.userDatabase };
+          if (p.username && newDB[p.username]) {
+              newDB[p.username] = {
+                  ...newDB[p.username],
+                  level: newLevel,
+                  xp: newXp
+              };
+          }
+
+          return { ...p, xp: newXp, level: newLevel, showLevelUp: leveledUp || p.showLevelUp, userDatabase: newDB };
+      });
+  }, [getMultipliers]);
   
   const setLevel = useCallback((l: number) => setGameState(p => ({ ...p, level: l })), []);
 
@@ -190,17 +237,16 @@ export const useGameState = () => {
   const openCase = useCallback((caseId: string) => {
       let resultItem: ItemTemplate | null = null;
       let cost = 0;
+      
+      const mults = getMultipliers();
+
       setGameState(prev => {
           const box = prev.cases.find(c => c.id === caseId);
           if (!box) return prev;
           cost = Math.floor(box.price * prev.config.casePriceMultiplier);
           if (prev.balance < cost) return prev;
           
-          // REMOVED LEVEL CHECK
-
-          const userLuck = prev.userDatabase[prev.username!]?.luckMultiplier || 1;
-          const globalLuck = prev.config.globalLuckMultiplier;
-          const totalLuck = userLuck * globalLuck;
+          const totalLuck = mults.luck;
           
           const overrideId = prev.userDatabase[prev.username!]?.nextDropOverride;
           if (overrideId && prev.items[overrideId]) {
@@ -209,7 +255,7 @@ export const useGameState = () => {
               const weightedItems = box.contains.map(c => {
                 const item = prev.items[c.templateId];
                 let weight = c.weight;
-                if (item && ['LEGENDARY', 'MYTHIC', 'CONTRABAND'].includes(item.rarity)) {
+                if (item && ['LEGENDARY', 'MYTHIC', 'CONTRABAND', 'GODLIKE'].includes(item.rarity)) {
                     weight = weight * totalLuck;
                 }
                 return { ...c, calculatedWeight: weight };
@@ -257,7 +303,7 @@ export const useGameState = () => {
           if (RARITY_ORDER.indexOf(resultItem.rarity) >= RARITY_ORDER.indexOf(Rarity.RARE)) {
               newLiveFeed = [{ id: crypto.randomUUID(), username: prev.username!, item: resultItem, timestamp: Date.now() }, ...prev.liveFeed].slice(0, 10);
           }
-          if (['LEGENDARY', 'MYTHIC', 'CONTRABAND'].includes(resultItem.rarity)) {
+          if (['LEGENDARY', 'MYTHIC', 'CONTRABAND', 'GODLIKE'].includes(resultItem.rarity)) {
                newLogs = [{ id: crypto.randomUUID(), timestamp: Date.now(), message: `${prev.username} found ${resultItem.name}!`, type: 'DROP', user: prev.username! }, ...prev.logs];
           }
 
@@ -282,7 +328,7 @@ export const useGameState = () => {
           };
       });
       return resultItem;
-  }, []);
+  }, [getMultipliers]);
 
   // Item Management
   const addItem = useCallback((tid: string) => setGameState(p => { 
@@ -305,64 +351,42 @@ export const useGameState = () => {
        return { ...p, inventory: p.inventory.filter(i => i.id !== id), userDatabase: newDB };
   }), []);
 
-  const sellItem = useCallback((id: string) => setGameState(p => { 
-      const i = p.inventory.find(x => x.id === id); 
-      if (!i) return p;
-      const levelMult = 1 + (p.level * 0.1); // 10% per level
-      const sellVal = Math.floor(i.value * p.config.sellValueMultiplier * levelMult);
+  const sellItem = useCallback((id: string) => {
+      const mults = getMultipliers();
+      setGameState(p => { 
+          const i = p.inventory.find(x => x.id === id); 
+          if (!i) return p;
+          
+          const sellVal = Math.floor(i.value * mults.value);
 
-      const newDB = { ...p.userDatabase };
-      if (p.username && newDB[p.username] && newDB[p.username].inventory) {
-          newDB[p.username].inventory = newDB[p.username].inventory!.filter(x => x.id !== id);
-          newDB[p.username].inventoryCount = newDB[p.username].inventory!.length;
-          newDB[p.username].balance += sellVal;
-      }
-      return { ...p, balance: p.balance + sellVal, inventory: p.inventory.filter(x => x.id !== id), userDatabase: newDB };
-  }), []);
+          const newDB = { ...p.userDatabase };
+          if (p.username && newDB[p.username] && newDB[p.username].inventory) {
+              newDB[p.username].inventory = newDB[p.username].inventory!.filter(x => x.id !== id);
+              newDB[p.username].inventoryCount = newDB[p.username].inventory!.length;
+              newDB[p.username].balance += sellVal;
+          }
+          return { ...p, balance: p.balance + sellVal, inventory: p.inventory.filter(x => x.id !== id), userDatabase: newDB };
+      })
+  }, [getMultipliers]);
 
-  const sellItems = useCallback((ids: string[]) => setGameState(p => {
-       const toSell = p.inventory.filter(i => ids.includes(i.id));
-       const levelMult = 1 + (p.level * 0.1); // 10% per level
-       const val = toSell.reduce((a, b) => a + (b.value * p.config.sellValueMultiplier * levelMult), 0);
-       
-       const newDB = { ...p.userDatabase };
-       if (p.username && newDB[p.username] && newDB[p.username].inventory) {
-           newDB[p.username].inventory = newDB[p.username].inventory!.filter(i => !ids.includes(i.id));
-           newDB[p.username].inventoryCount = newDB[p.username].inventory!.length;
-           newDB[p.username].balance += Math.floor(val);
-       }
-       return { ...p, balance: p.balance + Math.floor(val), inventory: p.inventory.filter(i => !ids.includes(i.id)), userDatabase: newDB };
-  }), []);
+  const sellItems = useCallback((ids: string[]) => {
+       const mults = getMultipliers();
+       setGameState(p => {
+           const toSell = p.inventory.filter(i => ids.includes(i.id));
+           const val = toSell.reduce((a, b) => a + (b.value * mults.value), 0);
+           
+           const newDB = { ...p.userDatabase };
+           if (p.username && newDB[p.username] && newDB[p.username].inventory) {
+               newDB[p.username].inventory = newDB[p.username].inventory!.filter(i => !ids.includes(i.id));
+               newDB[p.username].inventoryCount = newDB[p.username].inventory!.length;
+               newDB[p.username].balance += Math.floor(val);
+           }
+           return { ...p, balance: p.balance + Math.floor(val), inventory: p.inventory.filter(i => !ids.includes(i.id)), userDatabase: newDB };
+       })
+  }, [getMultipliers]);
   
-  const consumeItem = useCallback((itemId: string) => setGameState(p => {
-      const item = p.inventory.find(i => i.id === itemId);
-      if (!item || item.type !== 'potion') return p;
-      
-      let newDB = { ...p.userDatabase };
-      let currentUser = newDB[p.username!];
-      
-      if (item.templateId === 'small_luck_potion') {
-           currentUser.luckMultiplier = 1.5;
-           currentUser.luckExpiry = Date.now() + (5 * 60000); // 5 mins
-           alert("Luck boosted to 1.5x for 5 minutes!");
-      } else if (item.templateId === 'large_luck_potion') {
-           currentUser.luckMultiplier = 2.0;
-           currentUser.luckExpiry = Date.now() + (10 * 60000); // 10 mins
-           alert("Luck boosted to 2.0x for 10 minutes!");
-      }
-
-      // Remove item
-      if (currentUser && currentUser.inventory) {
-           currentUser.inventory = currentUser.inventory.filter(i => i.id !== itemId);
-           currentUser.inventoryCount = currentUser.inventory.length;
-      }
-      
-      return { 
-          ...p, 
-          inventory: p.inventory.filter(i => i.id !== itemId), 
-          userDatabase: newDB 
-      };
-  }), []);
+  // Consumable placeholder - currently unused as no potions
+  const consumeItem = useCallback((itemId: string) => {}, []);
 
   const getNextRarity = useCallback((current: Rarity) => {
       const idx = RARITY_ORDER.indexOf(current);
@@ -381,7 +405,17 @@ export const useGameState = () => {
   const buyPremium = useCallback((level: number) => {
       setGameState(prev => {
            if (prev.isPremium && prev.premiumLevel >= level) return prev;
-           return { ...prev, isPremium: true, premiumLevel: level };
+           
+           // SYNC TO DB
+           const newDB = { ...prev.userDatabase };
+           if (prev.username && newDB[prev.username]) {
+               newDB[prev.username] = {
+                   ...newDB[prev.username],
+                   premiumLevel: level
+               };
+           }
+
+           return { ...prev, isPremium: true, premiumLevel: level, userDatabase: newDB };
       });
       alert("Upgrade Successful! Welcome to the elite.");
   }, []);

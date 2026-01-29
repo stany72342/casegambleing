@@ -10,7 +10,7 @@ export enum Rarity {
   GODLIKE = 'GODLIKE'
 }
 
-export type ItemType = 'equipment' | 'character' | 'key' | 'artifact' | 'potion';
+export type ItemType = 'equipment' | 'character' | 'key' | 'artifact';
 export type Role = 'USER' | 'MOD' | 'ADMIN' | 'OWNER';
 
 export interface Item {
@@ -205,16 +205,19 @@ export interface UserAccount {
     muted?: boolean; 
     balance: number;
     level: number;
+    xp: number; 
+    premiumLevel: number; 
     inventoryCount: number;
     lastLogin: string;
     inbox: InboxMessage[]; 
-    // House Features
+    
+    // Legacy Fields (Deprecated but kept for compat)
     luckMultiplier: number;
-    luckExpiry?: number; // Expiration timestamp for potion effects
+    
     tags: ('VIP' | 'WATCHLIST' | 'TESTER' | 'BOT' | 'WHALE')[];
-    nextDropOverride?: string; // templateId to force next drop
+    nextDropOverride?: string; 
     inventory?: Item[]; 
-    adminNotes?: string; // New field for admin comments
+    adminNotes?: string; 
     stats: {
         totalSpent: number;
         totalValue: number;

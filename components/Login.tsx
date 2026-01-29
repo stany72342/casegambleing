@@ -33,7 +33,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
           <div className="w-16 h-16 bg-gradient-to-tr from-yellow-400 to-orange-500 rounded-2xl mx-auto flex items-center justify-center shadow-lg shadow-orange-500/20 mb-4 animate-bounce">
             <Gamepad2 className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-black text-white mb-2">Case<span className="text-yellow-400">Clicker</span></h1>
+          <h1 className="text-3xl font-black text-white mb-2">Case<span className="text-yellow-400">Gambler</span></h1>
           <p className="text-slate-400">Secure Trading Network</p>
         </div>
 

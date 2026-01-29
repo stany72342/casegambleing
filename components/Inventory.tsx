@@ -10,7 +10,6 @@ interface InventoryProps {
 }
 
 export const Inventory: React.FC<InventoryProps> = ({ gameState, onSell, onSellBulk }) => {
-  const { consumeItem } = useGameState(); // Use context hook to access consume function
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState('newest');
   const [selectedRarities, setSelectedRarities] = useState<Rarity[]>([]);
@@ -72,8 +71,7 @@ export const Inventory: React.FC<InventoryProps> = ({ gameState, onSell, onSellB
   const paginatedItems = filteredItems.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   // Stats
-  // Updated calculation to include Level Multiplier logic for display accuracy
-  const levelMult = 1 + (gameState.level * 0.1);
+  const levelMult = 1 + (gameState.level * 0.05); // 5% per level
   const totalValue = Math.floor(gameState.inventory.reduce((acc, item) => acc + item.value, 0) * gameState.config.sellValueMultiplier * levelMult);
 
   // Bulk Selection
@@ -217,7 +215,7 @@ export const Inventory: React.FC<InventoryProps> = ({ gameState, onSell, onSellB
                 {/* Type Filter */}
                 <div className="flex flex-wrap gap-2 items-center">
                     <span className="text-xs font-bold text-slate-500 uppercase mr-4">Type:</span>
-                    {['equipment', 'character', 'potion', 'artifact'].map((t) => (
+                    {['equipment', 'character', 'key', 'artifact'].map((t) => (
                         <button
                             key={t}
                             onClick={() => toggleTypeFilter(t as ItemType)}
@@ -322,7 +320,7 @@ export const Inventory: React.FC<InventoryProps> = ({ gameState, onSell, onSellB
                                     <h3 className={`text-xs font-bold truncate mb-1 ${RARITY_COLORS[item.rarity].text}`}>
                                         {item.name}
                                     </h3>
-                                    <div className="flex justify-between items-center text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-3">
+                                    <div className="flex justify-between items-center text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-2">
                                         <span>{item.type}</span>
                                         <span>{item.rarity}</span>
                                     </div>
@@ -335,27 +333,15 @@ export const Inventory: React.FC<InventoryProps> = ({ gameState, onSell, onSellB
                                     {/* Actions (Only when not bulk) */}
                                     {!isBulkMode && (
                                         <div className="mt-3 flex gap-2">
-                                            {item.type === 'potion' ? (
-                                                 <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        consumeItem(item.id);
-                                                    }}
-                                                    className="w-full py-2 bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-bold rounded transition-colors flex items-center justify-center gap-1"
-                                                >
-                                                    <Icons.FlaskConical size={12} /> DRINK
-                                                </button>
-                                            ) : (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        onSell(item.id);
-                                                    }}
-                                                    className="w-full py-2 bg-slate-800 hover:bg-green-600 hover:text-white text-slate-400 text-[10px] font-bold rounded transition-colors flex items-center justify-center gap-1 group/btn"
-                                                >
-                                                    <Icons.DollarSign size={12} /> SELL <span className="group-hover/btn:text-white text-green-400">${currentSellValue.toLocaleString()}</span>
-                                                </button>
-                                            )}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onSell(item.id);
+                                                }}
+                                                className="w-full py-2 bg-slate-800 hover:bg-green-600 hover:text-white text-slate-400 text-[10px] font-bold rounded transition-colors flex items-center justify-center gap-1 group/btn"
+                                            >
+                                                <Icons.DollarSign size={12} /> SELL <span className="group-hover/btn:text-white text-green-400">${currentSellValue.toLocaleString()}</span>
+                                            </button>
                                         </div>
                                     )}
                                 </div>
