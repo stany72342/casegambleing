@@ -15,7 +15,8 @@ export const CasinoHub: React.FC<CasinoHubProps> = ({ onSelectGame }) => {
       color: 'from-blue-600 to-blue-900',
       textColor: 'text-blue-400',
       minBet: '$1',
-      maxWin: '2x'
+      maxWin: '2x',
+      levelReq: 0
     },
     {
       id: 'highlow',
@@ -25,7 +26,8 @@ export const CasinoHub: React.FC<CasinoHubProps> = ({ onSelectGame }) => {
       color: 'from-indigo-600 to-violet-900',
       textColor: 'text-indigo-400',
       minBet: '$100',
-      maxWin: 'Unlimited'
+      maxWin: 'Unlimited',
+      levelReq: 0
     },
     {
       id: 'blackjack',
@@ -35,7 +37,8 @@ export const CasinoHub: React.FC<CasinoHubProps> = ({ onSelectGame }) => {
       color: 'from-green-600 to-emerald-900',
       textColor: 'text-green-400',
       minBet: '$100',
-      maxWin: '2.5x'
+      maxWin: '2.5x',
+      levelReq: 0
     },
     {
       id: 'roulette',
@@ -45,7 +48,8 @@ export const CasinoHub: React.FC<CasinoHubProps> = ({ onSelectGame }) => {
       color: 'from-red-600 to-rose-900',
       textColor: 'text-red-400',
       minBet: '$10',
-      maxWin: '14x'
+      maxWin: '14x',
+      levelReq: 0
     },
     {
       id: 'mines',
@@ -55,7 +59,8 @@ export const CasinoHub: React.FC<CasinoHubProps> = ({ onSelectGame }) => {
       color: 'from-purple-600 to-indigo-900',
       textColor: 'text-purple-400',
       minBet: '$100',
-      maxWin: 'Variable'
+      maxWin: 'Variable',
+      levelReq: 0
     },
     {
       id: 'slots',
@@ -65,7 +70,8 @@ export const CasinoHub: React.FC<CasinoHubProps> = ({ onSelectGame }) => {
       color: 'from-yellow-500 to-amber-800',
       textColor: 'text-yellow-400',
       minBet: '$10',
-      maxWin: 'JACKPOT'
+      maxWin: 'JACKPOT',
+      levelReq: 0
     }
   ];
 
@@ -108,7 +114,9 @@ export const CasinoHub: React.FC<CasinoHubProps> = ({ onSelectGame }) => {
               </div>
 
               <div>
-                <h3 className="text-3xl font-black text-white mb-2 group-hover:translate-x-2 transition-transform">{game.name}</h3>
+                <h3 className="text-3xl font-black text-white mb-2 group-hover:translate-x-2 transition-transform flex items-center gap-2">
+                    {game.name}
+                </h3>
                 <p className="text-slate-200 text-sm font-medium opacity-80 max-w-sm">{game.description}</p>
               </div>
 

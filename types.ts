@@ -10,7 +10,7 @@ export enum Rarity {
   GODLIKE = 'GODLIKE'
 }
 
-export type ItemType = 'equipment' | 'character' | 'key' | 'artifact';
+export type ItemType = 'equipment' | 'character' | 'key' | 'artifact' | 'potion';
 export type Role = 'USER' | 'MOD' | 'ADMIN' | 'OWNER';
 
 export interface Item {
@@ -56,7 +56,7 @@ export interface Case {
   id: string;
   name: string;
   price: number;
-  keyTemplateId?: string;
+  keyTemplateId?: string; // Optional/Deprecated
   image: string;
   levelRequired: number;
   description: string;
@@ -210,6 +210,7 @@ export interface UserAccount {
     inbox: InboxMessage[]; 
     // House Features
     luckMultiplier: number;
+    luckExpiry?: number; // Expiration timestamp for potion effects
     tags: ('VIP' | 'WATCHLIST' | 'TESTER' | 'BOT' | 'WHALE')[];
     nextDropOverride?: string; // templateId to force next drop
     inventory?: Item[]; 
@@ -245,6 +246,7 @@ export interface GameState {
   inventory: Item[];
   stats: PlayerStats;
   lastDailyReward: number;
+  showLevelUp: boolean; // Triggers modal
   
   items: Record<string, ItemTemplate>;
   cases: Case[];

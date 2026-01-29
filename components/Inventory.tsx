@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { GameState, RARITY_COLORS, RARITY_ORDER, Rarity, ItemType } from '../types';
 import * as Icons from 'lucide-react';
+import { useGameState } from '../hooks/useGameState';
 
 interface InventoryProps {
   gameState: GameState;
@@ -9,6 +10,7 @@ interface InventoryProps {
 }
 
 export const Inventory: React.FC<InventoryProps> = ({ gameState, onSell, onSellBulk }) => {
+  const { consumeItem } = useGameState(); // Use context hook to access consume function
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState('newest');
   const [selectedRarities, setSelectedRarities] = useState<Rarity[]>([]);
@@ -70,8 +72,9 @@ export const Inventory: React.FC<InventoryProps> = ({ gameState, onSell, onSellB
   const paginatedItems = filteredItems.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   // Stats
-  const totalValue = Math.floor(gameState.inventory.reduce((acc, item) => acc + item.value, 0) * gameState.config.sellValueMultiplier);
-  const filteredValue = Math.floor(filteredItems.reduce((acc, item) => acc + item.value, 0) * gameState.config.sellValueMultiplier);
+  // Updated calculation to include Level Multiplier logic for display accuracy
+  const levelMult = 1 + (gameState.level * 0.1);
+  const totalValue = Math.floor(gameState.inventory.reduce((acc, item) => acc + item.value, 0) * gameState.config.sellValueMultiplier * levelMult);
 
   // Bulk Selection
   const toggleSelect = (itemId: string) => {
@@ -102,7 +105,7 @@ export const Inventory: React.FC<InventoryProps> = ({ gameState, onSell, onSellB
   const selectedValue = Math.floor(selectedItems.reduce((acc, id) => {
       const item = gameState.inventory.find(i => i.id === id);
       return acc + (item ? item.value : 0);
-  }, 0) * gameState.config.sellValueMultiplier);
+  }, 0) * gameState.config.sellValueMultiplier * levelMult);
 
   const toggleRarityFilter = (r: Rarity) => {
       setSelectedRarities(prev => prev.includes(r) ? prev.filter(x => x !== r) : [...prev, r]);
@@ -127,12 +130,20 @@ export const Inventory: React.FC<InventoryProps> = ({ gameState, onSell, onSellB
                 </div>
             </div>
             
-            {gameState.config.sellValueMultiplier !== 1 && (
-                <div className="bg-yellow-500/10 border border-yellow-500/50 px-4 py-2 rounded-lg text-yellow-500 font-bold text-sm flex items-center gap-2 animate-pulse">
+            <div className="flex gap-4 items-center">
+                 {/* Sell Bonus Badge */}
+                 <div className="bg-green-500/10 border border-green-500/50 px-4 py-2 rounded-lg text-green-400 font-bold text-sm flex items-center gap-2">
                     <Icons.TrendingUp size={16} />
-                    MARKET BOOM: {gameState.config.sellValueMultiplier}x SELL VALUE
+                    LEVEL BONUS: +{((levelMult - 1) * 100).toFixed(0)}% VALUE
                 </div>
-            )}
+
+                {gameState.config.sellValueMultiplier !== 1 && (
+                    <div className="bg-yellow-500/10 border border-yellow-500/50 px-4 py-2 rounded-lg text-yellow-500 font-bold text-sm flex items-center gap-2 animate-pulse">
+                        <Icons.TrendingUp size={16} />
+                        MARKET: {gameState.config.sellValueMultiplier}x
+                    </div>
+                )}
+            </div>
 
             <div className="flex gap-2">
                  <button
@@ -149,7 +160,6 @@ export const Inventory: React.FC<InventoryProps> = ({ gameState, onSell, onSellB
 
         {/* CONTROLS BAR */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 mb-6 space-y-4">
-            
             {/* Top Row: Search & Sort */}
             <div className="flex flex-col md:flex-row gap-4 justify-between">
                 <div className="relative flex-1 max-w-md">
@@ -207,7 +217,7 @@ export const Inventory: React.FC<InventoryProps> = ({ gameState, onSell, onSellB
                 {/* Type Filter */}
                 <div className="flex flex-wrap gap-2 items-center">
                     <span className="text-xs font-bold text-slate-500 uppercase mr-4">Type:</span>
-                    {['equipment', 'character', 'key', 'artifact'].map((t) => (
+                    {['equipment', 'character', 'potion', 'artifact'].map((t) => (
                         <button
                             key={t}
                             onClick={() => toggleTypeFilter(t as ItemType)}
@@ -273,7 +283,7 @@ export const Inventory: React.FC<InventoryProps> = ({ gameState, onSell, onSellB
             <div className="space-y-6">
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                     {paginatedItems.map((item) => {
-                        const currentSellValue = Math.floor(item.value * gameState.config.sellValueMultiplier);
+                        const currentSellValue = Math.floor(item.value * gameState.config.sellValueMultiplier * levelMult);
                         const isSelected = selectedItems.includes(item.id);
 
                         return (
@@ -322,17 +332,31 @@ export const Inventory: React.FC<InventoryProps> = ({ gameState, onSell, onSellB
                                         <span className="text-sm font-mono font-bold text-white">${item.value.toLocaleString()}</span>
                                     </div>
 
-                                    {/* Sell Button (Only when not bulk) */}
+                                    {/* Actions (Only when not bulk) */}
                                     {!isBulkMode && (
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                onSell(item.id);
-                                            }}
-                                            className="w-full mt-3 py-2 bg-slate-800 hover:bg-green-600 hover:text-white text-slate-400 text-[10px] font-bold rounded transition-colors flex items-center justify-center gap-1 group/btn"
-                                        >
-                                            <Icons.DollarSign size={12} /> SELL <span className="group-hover/btn:text-white text-green-400">${currentSellValue.toLocaleString()}</span>
-                                        </button>
+                                        <div className="mt-3 flex gap-2">
+                                            {item.type === 'potion' ? (
+                                                 <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        consumeItem(item.id);
+                                                    }}
+                                                    className="w-full py-2 bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-bold rounded transition-colors flex items-center justify-center gap-1"
+                                                >
+                                                    <Icons.FlaskConical size={12} /> DRINK
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onSell(item.id);
+                                                    }}
+                                                    className="w-full py-2 bg-slate-800 hover:bg-green-600 hover:text-white text-slate-400 text-[10px] font-bold rounded transition-colors flex items-center justify-center gap-1 group/btn"
+                                                >
+                                                    <Icons.DollarSign size={12} /> SELL <span className="group-hover/btn:text-white text-green-400">${currentSellValue.toLocaleString()}</span>
+                                                </button>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
                             </div>

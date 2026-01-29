@@ -80,10 +80,6 @@ export const CaseOpener: React.FC<CaseOpenerProps> = ({ gameState, onOpen, onWin
 
   // Dynamic values
   const casePrice = Math.floor(selectedCase.price * gameState.config.casePriceMultiplier);
-  const userHasKey = selectedCase.keyTemplateId 
-    ? gameState.inventory.some(i => i.templateId === selectedCase.keyTemplateId)
-    : true;
-  const requiredKeyName = selectedCase.keyTemplateId ? gameState.items[selectedCase.keyTemplateId]?.name : null;
 
   // Initialize Audio Context on user interaction
   useEffect(() => {
@@ -119,10 +115,6 @@ export const CaseOpener: React.FC<CaseOpenerProps> = ({ gameState, onOpen, onWin
     if (isRolling) return;
     
     // Validation
-    if (selectedCase.keyTemplateId && !userHasKey) {
-        alert(`You need a ${requiredKeyName} to open this case!`);
-        return;
-    }
     if (casePrice > 0 && gameState.balance < casePrice) {
         alert("Not enough coins!");
         return;
@@ -410,23 +402,15 @@ export const CaseOpener: React.FC<CaseOpenerProps> = ({ gameState, onOpen, onWin
                 flex items-center gap-4 group
                 ${isRolling 
                     ? 'bg-slate-800 border-slate-700 text-slate-500 scale-95 grayscale cursor-not-allowed'
-                    : !userHasKey && selectedCase.keyTemplateId
-                        ? 'bg-orange-600 border-orange-400 text-white hover:bg-orange-500 hover:scale-105'
-                        : (casePrice > 0 && gameState.balance < casePrice)
-                            ? 'bg-red-900 border-red-700 text-red-200 cursor-not-allowed'
-                            : 'bg-gradient-to-b from-yellow-400 to-orange-600 border-yellow-300 text-white hover:scale-110 hover:shadow-orange-500/50 active:scale-95'}
+                    : (casePrice > 0 && gameState.balance < casePrice)
+                        ? 'bg-red-900 border-red-700 text-red-200 cursor-not-allowed'
+                        : 'bg-gradient-to-b from-yellow-400 to-orange-600 border-yellow-300 text-white hover:scale-110 hover:shadow-orange-500/50 active:scale-95'}
             `}
         >
             {isRolling ? (
                 <span className="animate-pulse">ROLLING...</span>
             ) : (
-                <>
-                    {userHasKey ? (
-                        <>OPEN CASE <Icons.ChevronRight className="group-hover:translate-x-2 transition-transform" /></>
-                    ) : (
-                        <><Icons.Lock /> NEED KEY</>
-                    )}
-                </>
+                <>OPEN CASE <Icons.ChevronRight className="group-hover:translate-x-2 transition-transform" /></>
             )}
         </button>
       </div>

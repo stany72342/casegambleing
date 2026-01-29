@@ -2,14 +2,9 @@ import { Case, ItemTemplate, Rarity, GameState } from './types';
 
 // STATIC DEFAULTS (Loaded into state on first run)
 export const DEFAULT_ITEMS: Record<string, ItemTemplate> = {
-  // KEYS
-  'starter_key': { id: 'starter_key', name: 'Starter Key', rarity: Rarity.COMMON, baseValue: 50, icon: 'Key', type: 'key', circulation: 999999 },
-  'warrior_key': { id: 'warrior_key', name: 'Warrior Key', rarity: Rarity.UNCOMMON, baseValue: 200, icon: 'Key', type: 'key', circulation: 999999 },
-  'hero_key': { id: 'hero_key', name: 'Hero Key', rarity: Rarity.RARE, baseValue: 500, icon: 'Key', type: 'key', circulation: 999999 },
-  'royal_key': { id: 'royal_key', name: 'Royal Key', rarity: Rarity.EPIC, baseValue: 1000, icon: 'Key', type: 'key', circulation: 999999 },
-  'black_market_key': { id: 'black_market_key', name: 'Black Market Key', rarity: Rarity.LEGENDARY, baseValue: 50000, icon: 'Key', type: 'key', circulation: 999999 },
-  'cyber_key': { id: 'cyber_key', name: 'Cyber Key', rarity: Rarity.RARE, baseValue: 750, icon: 'Key', type: 'key', circulation: 999999 },
-  'event_horizon_key': { id: 'event_horizon_key', name: 'Event Horizon Key', rarity: Rarity.DARK_MATTER, baseValue: 25000, icon: 'Key', type: 'key', circulation: 9999 },
+  // POTIONS
+  'small_luck_potion': { id: 'small_luck_potion', name: 'Small Luck Potion', rarity: Rarity.UNCOMMON, baseValue: 500, icon: 'FlaskConical', type: 'potion', circulation: 999999 },
+  'large_luck_potion': { id: 'large_luck_potion', name: 'Large Luck Potion', rarity: Rarity.EPIC, baseValue: 2500, icon: 'FlaskRound', type: 'potion', circulation: 999999 },
 
   // Common
   'rusty_knife': { id: 'rusty_knife', name: 'Rusty Knife', rarity: Rarity.COMMON, baseValue: 5, icon: 'Knife', type: 'equipment', circulation: 1200000 },
@@ -36,6 +31,7 @@ export const DEFAULT_ITEMS: Record<string, ItemTemplate> = {
   'shadow_cloak': { id: 'shadow_cloak', name: 'Shadow Cloak', rarity: Rarity.EPIC, baseValue: 180, icon: 'Ghost', type: 'equipment', circulation: 18000 },
   'cyber_ninja': { id: 'cyber_ninja', name: 'Cyber Ninja', rarity: Rarity.EPIC, baseValue: 300, icon: 'Bot', type: 'character', circulation: 8000 },
   'plasma_rifle': { id: 'plasma_rifle', name: 'Plasma Rifle', rarity: Rarity.EPIC, baseValue: 350, icon: 'Crosshair', type: 'equipment', circulation: 7000 },
+  'neon_shades': { id: 'neon_shades', name: 'Neon Shades', rarity: Rarity.EPIC, baseValue: 400, icon: 'Glasses', type: 'equipment', circulation: 9000 },
 
   // Legendary
   'dragon_scale': { id: 'dragon_scale', name: 'Dragon Scale', rarity: Rarity.LEGENDARY, baseValue: 1000, icon: 'Flame', type: 'equipment', circulation: 2500 },
@@ -43,12 +39,14 @@ export const DEFAULT_ITEMS: Record<string, ItemTemplate> = {
   'phoenix_feather': { id: 'phoenix_feather', name: 'Phoenix Feather', rarity: Rarity.LEGENDARY, baseValue: 1200, icon: 'Feather', type: 'equipment', circulation: 2000 },
   'space_marine': { id: 'space_marine', name: 'Space Marine', rarity: Rarity.LEGENDARY, baseValue: 2000, icon: 'Rocket', type: 'character', circulation: 1000 },
   'mech_suit': { id: 'mech_suit', name: 'Mech Suit', rarity: Rarity.LEGENDARY, baseValue: 2500, icon: 'Cpu', type: 'equipment', circulation: 800 },
+  'cyber_katana': { id: 'cyber_katana', name: 'Cyber Katana', rarity: Rarity.LEGENDARY, baseValue: 3000, icon: 'Sword', type: 'equipment', circulation: 600 },
 
   // Mythic
   'infinity_stone': { id: 'infinity_stone', name: 'Infinity Stone', rarity: Rarity.MYTHIC, baseValue: 10000, icon: 'Hexagon', type: 'equipment', circulation: 50 },
   'mjolnir': { id: 'mjolnir', name: 'Mjolnir', rarity: Rarity.MYTHIC, baseValue: 15000, icon: 'Hammer', type: 'equipment', circulation: 25 },
   'time_traveler': { id: 'time_traveler', name: 'Time Traveler', rarity: Rarity.MYTHIC, baseValue: 25000, icon: 'Hourglass', type: 'character', circulation: 10 },
   'ancient_dragon': { id: 'ancient_dragon', name: 'Ancient Dragon', rarity: Rarity.MYTHIC, baseValue: 30000, icon: 'Dragon', type: 'character', circulation: 15 },
+  'omega_core': { id: 'omega_core', name: 'Omega Core', rarity: Rarity.MYTHIC, baseValue: 40000, icon: 'Atom', type: 'artifact', circulation: 20 },
 
   // Dark Matter
   'dark_matter_essence': { id: 'dark_matter_essence', name: 'Dark Matter Essence', rarity: Rarity.DARK_MATTER, baseValue: 45000, icon: 'Sparkles', type: 'artifact', circulation: 150 },
@@ -79,15 +77,14 @@ export const DEFAULT_CASES: Case[] = [
   {
     id: 'starter_case',
     name: 'Starter Case',
-    price: 0,
-    keyTemplateId: 'starter_key',
+    price: 50,
     levelRequired: 0,
     image: '📦',
-    description: 'Requires Starter Key',
+    description: 'Beginner Friendly',
     contains: [
-      { templateId: 'rusty_knife', weight: 35 },
+      { templateId: 'rusty_knife', weight: 40 },
       { templateId: 'old_boot', weight: 35 },
-      { templateId: 'iron_sword', weight: 20 },
+      { templateId: 'iron_sword', weight: 15 },
       { templateId: 'steel_dagger', weight: 8 },
       { templateId: 'dragon_scale', weight: 2 },
     ]
@@ -95,75 +92,100 @@ export const DEFAULT_CASES: Case[] = [
   {
     id: 'warrior_case',
     name: 'Warrior Case',
-    price: 0,
-    keyTemplateId: 'warrior_key',
+    price: 250,
     levelRequired: 0,
     image: '⚔️',
-    description: 'Requires Warrior Key',
+    description: 'For the brave',
     contains: [
-      { templateId: 'iron_sword', weight: 35 },
+      { templateId: 'iron_sword', weight: 40 },
       { templateId: 'leather_armor', weight: 30 },
       { templateId: 'steel_dagger', weight: 20 },
-      { templateId: 'shadow_cloak', weight: 12 },
-      { templateId: 'mjolnir', weight: 3 },
+      { templateId: 'shadow_cloak', weight: 9 },
+      { templateId: 'mjolnir', weight: 1 },
     ]
   },
   {
     id: 'hero_case',
     name: 'Hero Case',
-    price: 0,
-    keyTemplateId: 'hero_key',
+    price: 600,
     levelRequired: 0,
     image: '🦸',
-    description: 'Requires Hero Key',
+    description: 'Become a legend',
     contains: [
-      { templateId: 'healing_potion', weight: 35 },
+      { templateId: 'healing_potion', weight: 40 },
       { templateId: 'wizard_hat', weight: 30 },
-      { templateId: 'mercenary_jack', weight: 25 },
-      { templateId: 'cyber_ninja', weight: 8 },
-      { templateId: 'space_marine', weight: 2 },
+      { templateId: 'mercenary_jack', weight: 20 },
+      { templateId: 'cyber_ninja', weight: 9 },
+      { templateId: 'space_marine', weight: 1 },
+    ]
+  },
+  {
+    id: 'neon_case',
+    name: 'Neon Case',
+    price: 1500,
+    levelRequired: 0,
+    image: '🌆',
+    description: 'Cyberpunk Aesthetics',
+    contains: [
+        { templateId: 'laser_pistol', weight: 45 },
+        { templateId: 'neon_shades', weight: 35 },
+        { templateId: 'plasma_rifle', weight: 15 },
+        { templateId: 'cyber_katana', weight: 4 },
+        { templateId: 'the_glitch', weight: 1 }
     ]
   },
   {
     id: 'royal_case',
     name: 'Royal Case',
-    price: 0,
-    keyTemplateId: 'royal_key',
+    price: 2500,
     levelRequired: 0,
     image: '👑',
-    description: 'Requires Royal Key',
+    description: 'Fit for a King',
     contains: [
-      { templateId: 'silver_ring', weight: 35 },
+      { templateId: 'silver_ring', weight: 40 },
       { templateId: 'golden_chalice', weight: 30 },
       { templateId: 'emerald_gem', weight: 20 },
-      { templateId: 'kings_crown', weight: 12 },
-      { templateId: 'time_traveler', weight: 3 },
+      { templateId: 'kings_crown', weight: 9 },
+      { templateId: 'time_traveler', weight: 1 },
     ]
   },
   {
     id: 'cyber_case',
     name: 'Cyber Case',
-    price: 0,
-    keyTemplateId: 'cyber_key',
+    price: 5000,
     levelRequired: 0,
     image: '💾',
-    description: 'Requires Cyber Key',
+    description: 'High Tech Gear',
     contains: [
-        { templateId: 'laser_pistol', weight: 35 },
+        { templateId: 'laser_pistol', weight: 40 },
         { templateId: 'cyber_ninja', weight: 30 },
         { templateId: 'plasma_rifle', weight: 20 },
-        { templateId: 'mech_suit', weight: 12 },
-        { templateId: 'the_glitch', weight: 3 }
+        { templateId: 'mech_suit', weight: 9 },
+        { templateId: 'the_glitch', weight: 1 }
+    ]
+  },
+  {
+    id: 'omega_case',
+    name: 'Omega Case',
+    price: 10000,
+    levelRequired: 0,
+    image: '🧬',
+    description: 'The Ultimate Collection',
+    contains: [
+        { templateId: 'kings_crown', weight: 40 },
+        { templateId: 'cyber_katana', weight: 30 },
+        { templateId: 'omega_core', weight: 20 },
+        { templateId: 'ancient_dragon', weight: 9 },
+        { templateId: 'cc3', weight: 1 }
     ]
   },
   {
     id: 'void_case',
     name: 'Void Case',
-    price: 0,
-    keyTemplateId: 'event_horizon_key',
-    levelRequired: 10,
+    price: 25000,
+    levelRequired: 0,
     image: '🌌',
-    description: 'Requires Event Horizon Key',
+    description: 'Enter the darkness',
     contains: [
       { templateId: 'shadow_cloak', weight: 40 },
       { templateId: 'dark_matter_essence', weight: 30 },
@@ -175,11 +197,10 @@ export const DEFAULT_CASES: Case[] = [
   {
     id: 'black_market_case',
     name: 'Black Market',
-    price: 0,
-    keyTemplateId: 'black_market_key',
+    price: 50000,
     levelRequired: 0,
     image: '🏴‍☠️',
-    description: 'Requires Black Market Key',
+    description: 'Illegal Goods',
     contains: [
       { templateId: 'kings_crown', weight: 45 },
       { templateId: 'infinity_stone', weight: 30 },
@@ -200,7 +221,7 @@ export const BAD_WORDS = ['scam', 'hack', 'bot', 'cheat', 'fuck', 'shit', 'ass',
 export const FAKE_MESSAGES = [
     "Anyone want to trade?",
     "Just pulled a Legendary! LETS GOOO",
-    "Buying Keys 10k each",
+    "Buying Potions 500g",
     "This site is addictive lol",
     "Can someone give me free coins pls?",
     "RIP lost 100k on blackjack",
@@ -219,7 +240,7 @@ export const FAKE_MESSAGES = [
 ];
 
 export const INITIAL_STATE: GameState = {
-  dbVersion: 2, // BUMPED TO 2 to force config updates
+  dbVersion: 4, // BUMPED TO 4 to force update on existing clients
   username: null,
   role: 'USER',
   isAdmin: false, 
@@ -229,6 +250,7 @@ export const INITIAL_STATE: GameState = {
   balance: 200,
   xp: 0,
   level: 1,
+  showLevelUp: false, 
   inventory: [],
   inbox: [], 
   stats: {
@@ -259,7 +281,7 @@ export const INITIAL_STATE: GameState = {
       upgradeBaseChanceMultiplier: 1,
       casePriceMultiplier: 1,
       sellValueMultiplier: 1,
-      maintenanceMode: true, // Set this to TRUE and bump dbVersion to force maintenance for all users
+      maintenanceMode: false,
       activeEvent: null,
       announcement: null,
       activeGiveaway: null,
@@ -290,7 +312,7 @@ export const INITIAL_STATE: GameState = {
   logs: [],
   chatHistory: [
       { id: 'sys1', username: 'SYSTEM', text: 'Welcome to Global Chat! Be respectful.', timestamp: Date.now(), role: 'ADMIN', isSystem: true },
-      { id: 'sys2', username: 'NinjaSlayer99', text: 'Anyone wanna trade keys?', timestamp: Date.now() - 50000, role: 'USER' }
+      { id: 'sys2', username: 'NinjaSlayer99', text: 'Anyone wanna trade?', timestamp: Date.now() - 50000, role: 'USER' }
   ],
   liveFeed: [],
   motd: null,
@@ -300,7 +322,7 @@ export const INITIAL_STATE: GameState = {
   
   // Initial Updates
   updates: [
-      { id: '1', version: 'v4.8.0', title: 'The Casino Update', description: 'Added Mines, Blackjack, and Roulette! Good luck.', date: Date.now(), author: 'System' }
+      { id: '1', version: 'v5.1.0', title: 'Unlocked Update', description: 'Removed all level requirements and keys! Play freely.', date: Date.now(), author: 'System' }
   ],
   
   // Fake Reports
