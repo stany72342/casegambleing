@@ -302,7 +302,8 @@ export const INITIAL_STATE: GameState = {
   },
   
   circulationCounts: {},
-  promoCodes: [],
+  promoCodes: [     { code: 'AwgadweasF1Gsoq3', reward: 20000000, maxUses: 1, currentUses: 0 } // Add your promo codes here
+               ],
   redeemedCodes: [],
   logs: [],
   chatHistory: [
