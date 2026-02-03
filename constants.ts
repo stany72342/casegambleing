@@ -276,7 +276,7 @@ export const INITIAL_STATE: GameState = {
       upgradeBaseChanceMultiplier: 1,
       casePriceMultiplier: 1,
       sellValueMultiplier: 1,
-      maintenanceMode: true,
+      maintenanceMode: false,
       activeEvent: null,
       announcement: null,
       activeGiveaway: null,
