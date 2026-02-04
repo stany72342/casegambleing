@@ -236,7 +236,7 @@ export const FAKE_MESSAGES = [
 ];
 
 export const INITIAL_STATE: GameState = {
-  dbVersion: 15, // Bumped for new content
+  dbVersion: 16, // Bumped for new wipe
   username: null,
   role: 'USER',
   isAdmin: false, 
@@ -379,22 +379,24 @@ export const INITIAL_STATE: GameState = {
       { id: 'sys1', username: 'SYSTEM', text: 'Welcome to Global Chat! Be respectful.', timestamp: Date.now(), role: 'ADMIN', isSystem: true },
   ],
   liveFeed: [],
-  motd: 'NEW SEASON! STATS WIPED. NO MORE EXPLOITS.',
+  motd: 'SEASON 2 IS LIVE! EVERYONE RESET TO $200.',
   theme: 'default',
   season: 2,
   scheduledEvents: [],
   
   // Initial Updates
   updates: [
-      { id: '4', version: 'v6.4.0', title: 'System Optimization', description: 'Implemented Vercel Speed Insights for performance monitoring.', date: Date.now(), author: 'System' },
-      { id: '3', version: 'v6.3.0', title: 'Feature: Mining Rig', description: 'The Mining Rig is now available in the shop! Generate passive income while you play.', date: Date.now() - 360000, author: 'System' },
-      { id: '2', version: 'v6.2.0', title: 'Rebrand: CaseGambler', description: 'Welcome to CaseGambler! New shop items coming soon. System core updated.', date: Date.now() - 3600000, author: 'System' },
-      { id: '1', version: 'v6.1.0', title: 'Balance Update', description: 'Removed experimental potion system. Returned to classic gameplay.', date: Date.now() - 86400000, author: 'System' }
+      { id: '5', version: 'v7.0.0', title: 'Season 2 Wipe', description: 'All accounts have been reset to give everyone a fair start. Good luck!', date: Date.now(), author: 'System' },
+      { id: '4', version: 'v6.4.0', title: 'System Optimization', description: 'Implemented Vercel Speed Insights for performance monitoring.', date: Date.now() - 86400000, author: 'System' },
   ],
   
   // Fake Reports
   reports: [],
   
-  // Real DB (Starts Empty)
-  userDatabase: {}
+  // Real DB with some default bots for leaderboard population
+  userDatabase: {
+      'Whale_Watcher': { username: 'Whale_Watcher', role: 'USER', banned: false, balance: 500, level: 3, xp: 200, premiumLevel: 0, miningLevel: 0, inventoryCount: 2, lastLogin: new Date().toISOString(), inbox: [], stats: { totalSpent: 0, totalValue: 0, casesOpened: 0, sessionStart: 0 }, inventory: [], tags: [], luckMultiplier: 1 },
+      'Lucky_Strike': { username: 'Lucky_Strike', role: 'USER', banned: false, balance: 350, level: 2, xp: 100, premiumLevel: 0, miningLevel: 0, inventoryCount: 1, lastLogin: new Date().toISOString(), inbox: [], stats: { totalSpent: 0, totalValue: 0, casesOpened: 0, sessionStart: 0 }, inventory: [], tags: [], luckMultiplier: 1 },
+      'RNG_God': { username: 'RNG_God', role: 'USER', banned: false, balance: 220, level: 1, xp: 50, premiumLevel: 0, miningLevel: 0, inventoryCount: 0, lastLogin: new Date().toISOString(), inbox: [], stats: { totalSpent: 0, totalValue: 0, casesOpened: 0, sessionStart: 0 }, inventory: [], tags: [], luckMultiplier: 1 },
+  }
 };

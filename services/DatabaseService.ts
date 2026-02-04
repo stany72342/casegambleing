@@ -11,23 +11,61 @@ export const DatabaseService = {
         try {
             const parsed = JSON.parse(data);
             
-            // VERSION MIGRATION LOGIC
+            // VERSION MIGRATION LOGIC (WIPE SEASON)
             if (parsed.dbVersion < INITIAL_STATE.dbVersion) {
+                // PRESERVE ACCOUNTS BUT WIPE PROGRESS
+                const migratedUserDB: Record<string, UserAccount> = {};
+                
+                // 1. Process existing users from the save
+                if (parsed.userDatabase) {
+                    Object.entries(parsed.userDatabase).forEach(([username, user]: [string, any]) => {
+                        migratedUserDB[username] = {
+                            ...user, // Keep static info
+                            balance: 200, // RESET BALANCE
+                            level: 1,     // RESET LEVEL
+                            xp: 0,
+                            premiumLevel: 0, // Reset Premium for fairness/season logic
+                            miningLevel: 0,
+                            inventory: [], // WIPE INVENTORY
+                            inventoryCount: 0,
+                            stats: {
+                                totalSpent: 0,
+                                totalValue: 0,
+                                casesOpened: 0,
+                                sessionStart: Date.now()
+                            },
+                            // Preserve Identity
+                            username: username,
+                            role: user.role || 'USER',
+                            banned: user.banned || false,
+                            ip: user.ip,
+                            inbox: [{
+                                id: 'wipe_msg',
+                                subject: 'Season Reset',
+                                body: 'Welcome to the new season! Your stats have been reset to give everyone a fair start. Good luck!',
+                                from: 'System',
+                                read: false,
+                                timestamp: Date.now()
+                            }]
+                        };
+                    });
+                }
+
+                // 2. Merge with INITIAL_STATE users (Bots/Defaults)
+                // We overwrite initial bots with migrated real users if names collide, or just mix them.
+                const combinedDB = { ...INITIAL_STATE.userDatabase, ...migratedUserDB };
+
                 return {
                     ...INITIAL_STATE,
-                    // Preserve User Data
+                    // Preserve Auth for current session if they were logged in
                     username: parsed.username,
-                    balance: parsed.balance ?? INITIAL_STATE.balance,
-                    xp: parsed.xp ?? INITIAL_STATE.xp,
-                    level: parsed.level ?? INITIAL_STATE.level,
-                    miningLevel: parsed.miningLevel ?? 0, // Ensure mining level is migrated
-                    inventory: parsed.inventory ?? [],
-                    stats: parsed.stats ?? INITIAL_STATE.stats,
-                    userDatabase: parsed.userDatabase ?? INITIAL_STATE.userDatabase,
-                    // Force Config Update
-                    config: INITIAL_STATE.config,
-                    // Update Version
-                    dbVersion: INITIAL_STATE.dbVersion
+                    role: parsed.role || 'USER',
+                    userDatabase: combinedDB,
+                    // Force balance reset for the active session state too
+                    balance: 200,
+                    inventory: [],
+                    level: 1,
+                    xp: 0
                 };
             }
 
