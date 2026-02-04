@@ -37,7 +37,7 @@ export const HighLow: React.FC<HighLowProps> = ({ gameState, onGameEnd, removeBa
     };
 
     const startGame = () => {
-        if (gameState.balance < bet) return;
+        if (gameState.balance < bet || bet <= 0) return;
         removeBalance(bet);
         setIsPlaying(true);
         setCurrentCard(generateCard());

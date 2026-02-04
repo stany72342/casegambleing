@@ -27,13 +27,14 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab, gameState, o
     }).format(num);
   };
 
-  const isCasinoActive = ['casino', 'blackjack', 'roulette', 'mines', 'slots', 'coinflip', 'highlow'].includes(currentTab);
+  const isCasinoActive = ['casino', 'blackjack', 'roulette', 'mines', 'slots', 'coinflip', 'highlow', 'plinko', 'dice', 'rps'].includes(currentTab);
 
   const navItems = [
     { id: 'cases', label: 'Cases', icon: LayoutDashboard },
     { id: 'inventory', label: 'Inventory', icon: Package },
     { id: 'shop', label: 'Shop', icon: ShoppingBag, disabled: !gameState.config.featureToggles.shop },
     { id: 'casino', label: 'Casino', icon: Dice5, active: isCasinoActive },
+    { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
     { id: 'stats', label: 'Stats', icon: TrendingUp },
     { id: 'catalog', label: 'Catalog', icon: BookOpen },
     { id: 'upgrader', label: 'Upgrader', icon: Dna, disabled: !gameState.config.featureToggles.upgrader },

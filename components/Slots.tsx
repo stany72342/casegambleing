@@ -29,7 +29,7 @@ export const Slots: React.FC<SlotsProps> = ({ gameState, onSpinResult, removeBal
   };
 
   const spin = () => {
-    if (gameState.balance < bet || isSpinning) return;
+    if (gameState.balance < bet || isSpinning || bet <= 0) return;
 
     removeBalance(bet);
     setIsSpinning(true);
@@ -150,11 +150,11 @@ export const Slots: React.FC<SlotsProps> = ({ gameState, onSpinResult, removeBal
                 {/* Spin Button */}
                 <button
                     onClick={spin}
-                    disabled={isSpinning || gameState.balance < bet}
+                    disabled={isSpinning || gameState.balance < bet || bet <= 0}
                     className={`
                         w-full py-4 rounded-xl font-black text-2xl uppercase tracking-widest shadow-lg transform transition-all
                         border-b-4 
-                        ${isSpinning || gameState.balance < bet 
+                        ${isSpinning || gameState.balance < bet || bet <= 0
                             ? 'bg-slate-600 border-slate-800 text-slate-400 cursor-not-allowed' 
                             : 'bg-red-600 border-red-800 text-white hover:bg-red-500 hover:border-red-700 active:border-b-0 active:translate-y-1 shadow-red-900/50'}
                     `}

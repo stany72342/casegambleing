@@ -8,23 +8,21 @@ interface LeaderboardProps {
 
 export const Leaderboard: React.FC<LeaderboardProps> = ({ gameState }) => {
   
-  // Calculate user total value
-  const userValue = gameState.inventory.reduce((acc, i) => acc + i.value, 0) + gameState.balance;
-
-  // Static list of "real" top players (simulated, but not auction bots)
-  const topPlayers = [
-      { name: "NinjaSlayer99", value: 15400000, level: 42, isMe: false },
-      { name: "KaiCenatFan", value: 12000000, level: 38, isMe: false },
-      { name: "CaseOpenerPro", value: 8500000, level: 35, isMe: false },
-      { name: "RNG_God", value: 5000000, level: 29, isMe: false },
-      { name: "LuckyStrike", value: 2100000, level: 20, isMe: false },
-  ];
-
-  // Insert current user into the list and sort
-  const allPlayers = [
-      ...topPlayers,
-      { name: gameState.username || "You", value: userValue, level: gameState.level, isMe: true }
-  ].sort((a, b) => b.value - a.value);
+  // Calculate dynamic stats for all users in the database
+  const allPlayers = Object.values(gameState.userDatabase).map(user => {
+      // Calculate inventory value roughly (some users might not have full inventory loaded in memory if strictly typed, 
+      // but for this state structure, userDatabase contains inventory arrays)
+      const inventoryValue = (user.inventory || []).reduce((acc, item) => acc + item.value, 0);
+      const totalNetWorth = user.balance + inventoryValue;
+      
+      return {
+          name: user.username,
+          value: totalNetWorth,
+          level: user.level,
+          isMe: user.username === gameState.username,
+          role: user.role
+      };
+  }).sort((a, b) => b.value - a.value).slice(0, 50); // Top 50
 
   return (
     <div className="max-w-4xl mx-auto py-12 px-4">
@@ -33,7 +31,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ gameState }) => {
                 <Trophy className="text-yellow-400" size={40} />
                 GLOBAL RANKINGS
             </h2>
-            <p className="text-slate-400">Compete against the world's best collectors.</p>
+            <p className="text-slate-400">Top 50 wealthiest players in the network.</p>
         </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
@@ -63,9 +61,12 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ gameState }) => {
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center ${player.isMe ? 'bg-yellow-500 text-black' : 'bg-slate-700 text-slate-300'}`}>
                             <User size={16} />
                         </div>
-                        <span className={`font-bold ${player.isMe ? 'text-yellow-400' : 'text-white'}`}>
-                            {player.name} {player.isMe && '(You)'}
-                        </span>
+                        <div className="flex flex-col">
+                            <span className={`font-bold flex items-center gap-2 ${player.isMe ? 'text-yellow-400' : 'text-white'}`}>
+                                {player.name} {player.isMe && '(You)'}
+                                {player.role === 'ADMIN' || player.role === 'OWNER' ? <span className="text-[10px] bg-red-600 text-white px-1 rounded">STAFF</span> : null}
+                            </span>
+                        </div>
                     </div>
 
                     <div className="col-span-2 text-center font-mono text-slate-400">
@@ -77,6 +78,12 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ gameState }) => {
                     </div>
                 </div>
             ))}
+            
+            {allPlayers.length === 0 && (
+                <div className="p-8 text-center text-slate-500">
+                    No rankings available yet.
+                </div>
+            )}
         </div>
     </div>
   );

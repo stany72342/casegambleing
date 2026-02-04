@@ -33,7 +33,7 @@ export const Mines: React.FC<MinesProps> = ({ gameState, onGameEnd, removeBalanc
   };
 
   const startGame = () => {
-      if (gameState.balance < betAmount) return;
+      if (gameState.balance < betAmount || betAmount <= 0) return;
       
       removeBalance(betAmount);
       setIsPlaying(true);
@@ -101,7 +101,7 @@ export const Mines: React.FC<MinesProps> = ({ gameState, onGameEnd, removeBalanc
                         <input 
                             type="number" 
                             value={betAmount} 
-                            onChange={(e) => setBetAmount(parseInt(e.target.value) || 0)}
+                            onChange={(e) => setBetAmount(Math.max(0, parseInt(e.target.value) || 0))}
                             disabled={isPlaying}
                             className="w-full bg-black border border-slate-700 rounded p-3 text-white font-mono font-bold"
                         />
@@ -125,7 +125,7 @@ export const Mines: React.FC<MinesProps> = ({ gameState, onGameEnd, removeBalanc
                 {!isPlaying ? (
                     <button 
                         onClick={startGame}
-                        disabled={gameState.balance < betAmount}
+                        disabled={gameState.balance < betAmount || betAmount <= 0}
                         className="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white font-black rounded-xl shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         START GAME

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ShoppingCart, RefreshCw, Lock, Hammer, Rocket } from 'lucide-react';
+import { ShoppingCart, RefreshCw, Lock, Rocket, ArrowUp } from 'lucide-react';
 import { GameState, ItemTemplate, RARITY_COLORS } from '../types';
+import { useGameState } from '../hooks/useGameState';
 import * as Icons from 'lucide-react';
 
 interface ShopProps {
@@ -135,25 +136,15 @@ export const Shop: React.FC<ShopProps> = ({ gameState, addBalance, onBuyItem }) 
             </div>
         </div>
 
-        {/* FUTURE SHIPMENTS (Placeholder) */}
+        {/* SPECIAL HARDWARE */}
         <div>
             <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
                 <Rocket className="text-purple-400" />
-                Future Shipments
+                Coming Soon
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 opacity-60">
-                <div className="bg-slate-900 border border-slate-700 rounded-xl p-6 flex flex-col items-center relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-black/50 z-10 flex items-center justify-center backdrop-blur-[1px]">
-                        <div className="bg-slate-800 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-2 border border-slate-600"><Lock size={12} /> LOCKED</div>
-                    </div>
-                    <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center mb-4 border border-slate-600">
-                        <Hammer size={32} className="text-slate-500" />
-                    </div>
-                    <h3 className="font-bold text-lg text-slate-300">Mining Rig</h3>
-                    <p className="text-xs text-slate-500 text-center mt-2">Generate passive income while offline.</p>
-                </div>
-
-                <div className="bg-slate-900 border border-slate-700 rounded-xl p-6 flex flex-col items-center relative overflow-hidden group">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* PLACEHOLDERS */}
+                <div className="bg-slate-900 border border-slate-700 rounded-xl p-6 flex flex-col items-center relative overflow-hidden group opacity-60">
                     <div className="absolute inset-0 bg-black/50 z-10 flex items-center justify-center backdrop-blur-[1px]">
                         <div className="bg-slate-800 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-2 border border-slate-600"><Lock size={12} /> SOON</div>
                     </div>
@@ -164,7 +155,7 @@ export const Shop: React.FC<ShopProps> = ({ gameState, addBalance, onBuyItem }) 
                     <p className="text-xs text-slate-500 text-center mt-2">Access to high-roller VIP tournaments.</p>
                 </div>
 
-                <div className="bg-slate-900 border border-slate-700 rounded-xl p-6 flex flex-col items-center relative overflow-hidden group">
+                <div className="bg-slate-900 border border-slate-700 rounded-xl p-6 flex flex-col items-center relative overflow-hidden group opacity-60">
                     <div className="absolute inset-0 bg-black/50 z-10 flex items-center justify-center backdrop-blur-[1px]">
                         <div className="bg-slate-800 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-2 border border-slate-600"><Lock size={12} /> SOON</div>
                     </div>

@@ -203,10 +203,12 @@ export interface UserAccount {
     banned: boolean;
     kicked?: boolean; 
     muted?: boolean; 
+    ip?: string; // New IP tracking
     balance: number;
     level: number;
     xp: number; 
     premiumLevel: number; 
+    miningLevel: number; // New: Mining Rig Level
     inventoryCount: number;
     lastLogin: string;
     inbox: InboxMessage[]; 
@@ -246,6 +248,7 @@ export interface GameState {
   balance: number;
   xp: number;
   level: number;
+  miningLevel: number; // New
   inventory: Item[];
   stats: PlayerStats;
   lastDailyReward: number;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dice5, CircleDot, Bomb, Coins, ArrowRight, CircleDollarSign, ArrowUp } from 'lucide-react';
+import { Dice5, CircleDot, Bomb, Coins, ArrowRight, CircleDollarSign, ArrowUp, LayoutGrid, Scissors, Dna } from 'lucide-react';
 
 interface CasinoHubProps {
   onSelectGame: (gameId: string) => void;
@@ -7,6 +7,17 @@ interface CasinoHubProps {
 
 export const CasinoHub: React.FC<CasinoHubProps> = ({ onSelectGame }) => {
   const games = [
+    {
+      id: 'plinko',
+      name: 'Plinko',
+      description: 'Drop the ball and pray for the 110x multiplier.',
+      icon: LayoutGrid,
+      color: 'from-pink-500 to-purple-900',
+      textColor: 'text-pink-400',
+      minBet: '$100',
+      maxWin: '110x',
+      levelReq: 0
+    },
     {
       id: 'coinflip',
       name: 'Coin Flip',
@@ -27,6 +38,28 @@ export const CasinoHub: React.FC<CasinoHubProps> = ({ onSelectGame }) => {
       textColor: 'text-indigo-400',
       minBet: '$100',
       maxWin: 'Unlimited',
+      levelReq: 0
+    },
+    {
+      id: 'dice',
+      name: 'Dice',
+      description: 'Slide to adjust your win chance and multiplier.',
+      icon: Dna,
+      color: 'from-cyan-600 to-blue-900',
+      textColor: 'text-cyan-400',
+      minBet: '$10',
+      maxWin: '98x',
+      levelReq: 0
+    },
+    {
+      id: 'rps',
+      name: 'RPS',
+      description: 'Rock, Paper, Scissors. Beat the house.',
+      icon: Scissors,
+      color: 'from-orange-600 to-red-900',
+      textColor: 'text-orange-400',
+      minBet: '$50',
+      maxWin: '2x',
       levelReq: 0
     },
     {
@@ -78,8 +111,8 @@ export const CasinoHub: React.FC<CasinoHubProps> = ({ onSelectGame }) => {
   return (
     <div className="max-w-7xl mx-auto py-12 px-4">
       <div className="text-center mb-16 animate-in slide-in-from-top duration-500">
-        <h1 className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-yellow-500 to-yellow-800 mb-4 drop-shadow-[0_0_15px_rgba(234,179,8,0.5)]">
-          CASINO ROYALE
+        <h1 className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-orange-500 to-yellow-600 mb-4 drop-shadow-[0_0_15px_rgba(234,179,8,0.5)]">
+          CASINO
         </h1>
         <p className="text-slate-400 text-lg max-w-2xl mx-auto">
           High stakes, massive rewards. Choose your game and test your fortune against the house.

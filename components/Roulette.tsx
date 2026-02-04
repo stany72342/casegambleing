@@ -91,7 +91,7 @@ export const Roulette: React.FC<RouletteProps> = ({ gameState, onWin, removeBala
   }, []);
 
   const spin = (colorChoice: 'red' | 'black' | 'green') => {
-      if (isSpinning || gameState.balance < betAmount) return;
+      if (isSpinning || gameState.balance < betAmount || betAmount <= 0) return;
 
       SoundEffect.init();
       removeBalance(betAmount);
@@ -342,7 +342,7 @@ export const Roulette: React.FC<RouletteProps> = ({ gameState, onWin, removeBala
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <button 
                     onClick={() => spin('red')}
-                    disabled={isSpinning || gameState.balance < betAmount}
+                    disabled={isSpinning || gameState.balance < betAmount || betAmount <= 0}
                     className="group relative h-32 rounded-2xl bg-gradient-to-br from-red-600 to-red-900 border-2 border-red-500 hover:border-red-400 active:scale-95 transition-all shadow-[0_0_30px_rgba(220,38,38,0.2)] disabled:opacity-50 disabled:grayscale overflow-hidden"
                 >
                     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
@@ -354,7 +354,7 @@ export const Roulette: React.FC<RouletteProps> = ({ gameState, onWin, removeBala
 
                 <button 
                     onClick={() => spin('green')}
-                    disabled={isSpinning || gameState.balance < betAmount}
+                    disabled={isSpinning || gameState.balance < betAmount || betAmount <= 0}
                     className="group relative h-32 rounded-2xl bg-gradient-to-br from-green-500 to-green-800 border-2 border-green-400 hover:border-green-300 active:scale-95 transition-all shadow-[0_0_30px_rgba(34,197,94,0.2)] disabled:opacity-50 disabled:grayscale overflow-hidden"
                 >
                     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
@@ -366,7 +366,7 @@ export const Roulette: React.FC<RouletteProps> = ({ gameState, onWin, removeBala
 
                 <button 
                     onClick={() => spin('black')}
-                    disabled={isSpinning || gameState.balance < betAmount}
+                    disabled={isSpinning || gameState.balance < betAmount || betAmount <= 0}
                     className="group relative h-32 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 border-2 border-slate-500 hover:border-slate-400 active:scale-95 transition-all shadow-[0_0_30px_rgba(100,116,139,0.2)] disabled:opacity-50 disabled:grayscale overflow-hidden"
                 >
                     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>

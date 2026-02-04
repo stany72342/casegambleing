@@ -9,12 +9,16 @@ import { Roulette } from './components/Roulette';
 import { Mines } from './components/Mines';
 import { CoinFlip } from './components/CoinFlip';
 import { HighLow } from './components/HighLow';
+import { Plinko } from './components/Plinko';
+import { Dice } from './components/Dice';
+import { RPS } from './components/RPS';
 import { Shop } from './components/Shop';
 import { Login } from './components/Login';
 import { AdminPanel } from './components/AdminPanel';
 import { Stats } from './components/Stats';
 import { Catalog } from './components/Catalog';
 import { CasinoHub } from './components/CasinoHub'; 
+import { Leaderboard } from './components/Leaderboard';
 import { SplashPage } from './components/SplashPage';
 import { useGameState } from './hooks/useGameState';
 import * as Icons from 'lucide-react';
@@ -29,7 +33,8 @@ const App = () => {
   const [maintenanceBypass, setMaintenanceBypass] = useState(false);
   
   const { 
-    gameState, 
+    gameState,
+    setGameState, // Added to close modal
     login,
     logout,
     openCase, 
@@ -166,7 +171,6 @@ const App = () => {
   const isAdmin = gameState.isAdmin;
   const isLoggedIn = !!gameState.username;
 
-  // Case A: User logged in, but not admin, and maintenance is ON -> Lockout
   if (isLoggedIn && isMaintenance && !isAdmin) {
       return (
           <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
@@ -190,15 +194,11 @@ const App = () => {
       );
   }
 
-  // Case B: Not logged in
   if (!isLoggedIn) {
-      // If Maintenance ON
       if (isMaintenance) {
           if (maintenanceBypass) {
-              // Show Login (Staff Bypass)
               return <Login onLogin={login} />;
           }
-          // Show Maintenance Screen
           return (
               <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
                   <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
@@ -211,7 +211,6 @@ const App = () => {
                           We are updating the gaming experience.<br/>
                           Check back soon.
                       </p>
-                      
                       <button 
                         onClick={() => setMaintenanceBypass(true)} 
                         className="text-xs font-bold text-slate-600 hover:text-white transition-colors flex items-center justify-center gap-2 mx-auto bg-slate-950/50 px-4 py-2 rounded-full border border-slate-800 hover:border-slate-600"
@@ -222,11 +221,9 @@ const App = () => {
               </div>
           );
       }
-      // Normal Login
       return <Login onLogin={login} />;
   }
 
-  // Feature Toggles Check
   const isTabEnabled = (tab: string) => {
       const toggles = gameState.config.featureToggles;
       if (tab === 'upgrader' && !toggles.upgrader) return false;
@@ -238,12 +235,37 @@ const App = () => {
       return true;
   };
 
-  if (!isTabEnabled(currentTab) && currentTab !== 'cases' && currentTab !== 'casino') {
+  if (!isTabEnabled(currentTab) && currentTab !== 'cases' && currentTab !== 'casino' && currentTab !== 'leaderboard') {
       setTab('cases');
   }
 
   return (
     <div className={`min-h-screen text-white font-sans pb-20 relative transition-colors duration-500 ${getThemeClasses()}`}>
+      
+      {/* Level Up Modal */}
+      {gameState.showLevelUp && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-md animate-in fade-in">
+              <div className="bg-slate-900 border-2 border-yellow-500 p-10 rounded-3xl text-center shadow-[0_0_100px_rgba(234,179,8,0.5)] max-w-md w-full relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-t from-yellow-900/20 to-transparent"></div>
+                  <Icons.Star size={80} className="text-yellow-400 mx-auto mb-6 animate-bounce drop-shadow-lg" />
+                  <h2 className="text-5xl font-black text-white mb-2">LEVEL UP!</h2>
+                  <p className="text-xl text-yellow-400 font-bold mb-6">You are now Level {gameState.level}</p>
+                  <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 mb-8">
+                       <div className="text-slate-400 text-sm mb-2">Rewards Unlocked:</div>
+                       <ul className="text-left text-sm space-y-2">
+                           <li className="flex items-center gap-2 text-green-400"><Icons.Check size={16} /> +10% Sell Value Multiplier</li>
+                           <li className="flex items-center gap-2 text-green-400"><Icons.Check size={16} /> New Cases Available</li>
+                       </ul>
+                  </div>
+                  <button 
+                    onClick={() => setGameState(prev => ({ ...prev, showLevelUp: false }))}
+                    className="w-full py-4 bg-yellow-500 hover:bg-yellow-400 text-black font-black rounded-xl text-xl shadow-lg transition-transform hover:scale-105 active:scale-95 cursor-pointer relative z-50"
+                  >
+                      AWESOME!
+                  </button>
+              </div>
+          </div>
+      )}
       
       {/* Navbar & App Content */}
       <Navbar currentTab={currentTab} setTab={setTab} gameState={gameState} onLogout={logout} />
@@ -537,6 +559,58 @@ const App = () => {
                       removeBalance={removeBalance}
                   />
               </div>
+          )}
+
+          {currentTab === 'plinko' && (
+              <div className="space-y-4">
+                  <button onClick={() => setTab('casino')} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+                      <Icons.ArrowLeft size={20} /> Back to Casino
+                  </button>
+                  <Plinko
+                      gameState={gameState}
+                      onWin={(amount) => {
+                          addBalance(amount);
+                          addXp(15);
+                      }}
+                      removeBalance={removeBalance}
+                  />
+              </div>
+          )}
+
+          {currentTab === 'dice' && (
+              <div className="space-y-4">
+                  <button onClick={() => setTab('casino')} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+                      <Icons.ArrowLeft size={20} /> Back to Casino
+                  </button>
+                  <Dice
+                      gameState={gameState}
+                      onWin={(amount) => {
+                          addBalance(amount);
+                          addXp(10);
+                      }}
+                      removeBalance={removeBalance}
+                  />
+              </div>
+          )}
+
+          {currentTab === 'rps' && (
+              <div className="space-y-4">
+                  <button onClick={() => setTab('casino')} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+                      <Icons.ArrowLeft size={20} /> Back to Casino
+                  </button>
+                  <RPS
+                      gameState={gameState}
+                      onWin={(amount) => {
+                          addBalance(amount);
+                          addXp(10);
+                      }}
+                      removeBalance={removeBalance}
+                  />
+              </div>
+          )}
+
+          {currentTab === 'leaderboard' && (
+              <Leaderboard gameState={gameState} />
           )}
 
           {currentTab === 'stats' && (

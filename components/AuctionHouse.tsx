@@ -135,7 +135,10 @@ export const AuctionHouse: React.FC<AuctionHouseProps> = ({ gameState, onBuy, on
                                         placeholder="Price"
                                         className="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-sm text-white focus:border-yellow-500 outline-none"
                                         value={sellPrice[item.id] || ''}
-                                        onChange={(e) => setSellPrice({...sellPrice, [item.id]: e.target.value})}
+                                        onChange={(e) => {
+                                            const val = Math.max(0, parseInt(e.target.value) || 0);
+                                            setSellPrice({...sellPrice, [item.id]: val.toString()})
+                                        }}
                                     />
                                     <button 
                                         onClick={() => {

@@ -12,10 +12,7 @@ export const DatabaseService = {
             const parsed = JSON.parse(data);
             
             // VERSION MIGRATION LOGIC
-            // If the code version (INITIAL_STATE.dbVersion) is higher than the saved version,
-            // we force an update of the 'config' object to ensure users get new settings (like maintenance mode).
             if (parsed.dbVersion < INITIAL_STATE.dbVersion) {
-                console.log(`Migrating DB from v${parsed.dbVersion} to v${INITIAL_STATE.dbVersion}`);
                 return {
                     ...INITIAL_STATE,
                     // Preserve User Data
@@ -23,10 +20,11 @@ export const DatabaseService = {
                     balance: parsed.balance ?? INITIAL_STATE.balance,
                     xp: parsed.xp ?? INITIAL_STATE.xp,
                     level: parsed.level ?? INITIAL_STATE.level,
+                    miningLevel: parsed.miningLevel ?? 0, // Ensure mining level is migrated
                     inventory: parsed.inventory ?? [],
                     stats: parsed.stats ?? INITIAL_STATE.stats,
                     userDatabase: parsed.userDatabase ?? INITIAL_STATE.userDatabase,
-                    // Force Config Update from Code (This fixes the "Friend didn't see maintenance" issue)
+                    // Force Config Update
                     config: INITIAL_STATE.config,
                     // Update Version
                     dbVersion: INITIAL_STATE.dbVersion
@@ -37,9 +35,6 @@ export const DatabaseService = {
             return {
                 ...INITIAL_STATE,
                 ...parsed,
-                // We merge config to allow local admin toggles to persist, 
-                // but strictly speaking, in a static app, you might want INITIAL_STATE.config to always win.
-                // For now, we allow local overrides unless version changed.
                 config: { ...INITIAL_STATE.config, ...parsed.config },
                 items: { ...DEFAULT_ITEMS, ...(parsed.items || {}) },
                 cases: (parsed.cases && parsed.cases.length) ? parsed.cases : DEFAULT_CASES,
@@ -81,7 +76,6 @@ export const DatabaseService = {
         }
     },
 
-    // --- MOCK DATABASE OPERATIONS (For Test Panel) ---
     getCollection: (collection: 'users' | 'cases' | 'items' | 'config' | 'logs') => {
         const state = DatabaseService.load();
         switch(collection) {

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ShieldAlert, Zap, Mail, TrendingUp, Users, Settings, Terminal, Activity, DollarSign, Package, Lock, Play, Pause, AlertTriangle, Search, Tag, Eye, RefreshCw, BarChart, Clock, Layout, Gift, Trash2, LogOut, VolumeX, Edit, Plus, Save, Download, Upload, Copy, Megaphone, ShoppingCart, Ban, Database, Key, Ticket, Calendar, X, Check, FileText, Send, User, Gamepad2, FilePlus, Sliders, StickyNote, Flag, Globe, Radio } from 'lucide-react';
 import { GameState, Role, ItemTemplate, Rarity, GameConfig, ScheduledEvent, UserAccount, RARITY_COLORS, Case, ItemType, ShopEntry, GameUpdate, GameSettings } from '../types';
+import { put } from "@vercel/blob";
 
 interface AdminPanelProps {
   gameState: GameState;
@@ -139,6 +140,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = (props) => {
       }
       
       setConsoleInput('');
+  };
+
+  const handleBlobTest = async () => {
+      try {
+          const { url } = await put('articles/blob.txt', 'Hello World!', { access: 'public' });
+          alert(`Blob uploaded successfully: ${url}`);
+      } catch (error: any) {
+          alert(`Blob upload failed: ${error.message}. Make sure BLOB_READ_WRITE_TOKEN is set in your .env.local file.`);
+      }
   };
 
   const toggleFeature = (key: keyof GameConfig['featureToggles']) => {
@@ -654,9 +664,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = (props) => {
                   />
               </div>
               
-              <div className="bg-red-900/20 border border-red-900 p-4 rounded-xl">
-                  <h4 className="text-red-500 font-bold mb-2 flex items-center gap-2"><AlertTriangle size={16} /> Danger Zone</h4>
+              <div className="bg-red-900/20 border border-red-900 p-4 rounded-xl flex justify-between items-center">
+                  <div className="flex items-center gap-2 text-red-500 font-bold">
+                      <AlertTriangle size={16} /> Danger Zone
+                  </div>
                   <div className="flex gap-4">
+                      <button onClick={handleBlobTest} className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded text-xs">TEST BLOB UPLOAD</button>
                       <button onClick={props.onSeasonReset} className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-bold rounded text-xs">WIPE ALL USERS</button>
                       <button onClick={() => { if(confirm("Hard Reset?")) { localStorage.clear(); window.location.reload(); } }} className="px-4 py-2 bg-red-900 hover:bg-red-800 text-white font-bold rounded text-xs">HARD RESET (FACTORY)</button>
                   </div>
@@ -798,7 +811,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = (props) => {
                       <h4 className="font-bold text-white mb-4">Inventory Inspector ({inventory.length} Items)</h4>
                       <div className="grid grid-cols-6 gap-2 max-h-[400px] overflow-y-auto p-2">
                           {inventory.map((item) => (
-                              <div key={item.id} className={`bg-slate-950 border border-slate-800 p-2 rounded flex flex-col items-center relative group`}>
+                              <div key={item.id} className={`bg-slate-900 border border-slate-800 p-2 rounded flex flex-col items-center relative group`}>
                                    <div className={`text-[10px] ${RARITY_COLORS[item.rarity].text} font-bold mb-1 truncate w-full text-center`}>{item.name}</div>
                                    <div className="text-[10px] text-slate-500 font-mono">${item.value}</div>
                                    <button 

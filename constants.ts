@@ -61,10 +61,10 @@ export const DEFAULT_ITEMS: Record<string, ItemTemplate> = {
       id: 'secret_glitch', 
       name: 'ă̵̲̓͂̈́̓̾̀̔̀̔̐̉͑͝ḑ̴̛͈͎͍̞͍̣͍̺̋́̽̈́͑̌̀̚w̸̤̮̆̽͋͂̔͆͂̾͝͝q̸̳̙̜̑̅͛̈́̂͋͒͗̏̿̆͛̿̄ê̵͈̱͔̼̊͝', 
       rarity: Rarity.GODLIKE, 
-      baseValue: 666666666666666666666, 
+      baseValue: 666666666, 
       icon: 'Eye', 
       type: 'artifact', 
-      circulation: 1,
+      circulation: 0,
       hidden: true // Prevents showing in shop
   },
 };
@@ -81,7 +81,8 @@ export const DEFAULT_CASES: Case[] = [
       { templateId: 'rusty_knife', weight: 40 },
       { templateId: 'old_boot', weight: 35 },
       { templateId: 'rock', weight: 15 }, 
-      { templateId: 'iron_sword', weight: 10 },
+      { templateId: 'iron_sword', weight: 9.9 },
+      { templateId: 'kings_crown', weight: 0.1 }, // Added Rare Chance
     ]
   },
   {
@@ -235,7 +236,7 @@ export const FAKE_MESSAGES = [
 ];
 
 export const INITIAL_STATE: GameState = {
-  dbVersion: 8, // Bumped to 8 for removal of potions
+  dbVersion: 15, // Bumped for new content
   username: null,
   role: 'USER',
   isAdmin: false, 
@@ -245,6 +246,7 @@ export const INITIAL_STATE: GameState = {
   balance: 200,
   xp: 0,
   level: 1,
+  miningLevel: 0,
   showLevelUp: false, 
   inventory: [],
   inbox: [], 
@@ -302,37 +304,97 @@ export const INITIAL_STATE: GameState = {
   },
   
   circulationCounts: {},
-  promoCodes: [     { code: 'AwgadweasF1Gsoq3', reward: 20000000, maxUses: 1, currentUses: 0 } // Add your promo codes here
-               ],
+  promoCodes: [
+      // Standard Permanent Codes
+      { code: 'WELCOME', reward: 5000, maxUses: -1, currentUses: 0 },
+      { code: 'FREECOINS', reward: 1000, maxUses: -1, currentUses: 0 },
+      
+      // 30 Generated 10k Codes (Single Use)
+      { code: 'GOLD-8X2A', reward: 10000, maxUses: 1, currentUses: 0 },
+      { code: 'GOLD-9B1C', reward: 10000, maxUses: 1, currentUses: 0 },
+      { code: 'GOLD-3D4F', reward: 10000, maxUses: 1, currentUses: 0 },
+      { code: 'GOLD-7H8J', reward: 10000, maxUses: 1, currentUses: 0 },
+      { code: 'GOLD-2K9L', reward: 10000, maxUses: 1, currentUses: 0 },
+      { code: 'RICH-1M2N', reward: 10000, maxUses: 1, currentUses: 0 },
+      { code: 'RICH-5P6Q', reward: 10000, maxUses: 1, currentUses: 0 },
+      { code: 'RICH-8R9S', reward: 10000, maxUses: 1, currentUses: 0 },
+      { code: 'RICH-4T3V', reward: 10000, maxUses: 1, currentUses: 0 },
+      { code: 'RICH-6W7X', reward: 10000, maxUses: 1, currentUses: 0 },
+      { code: 'EPIC-9Y8Z', reward: 10000, maxUses: 1, currentUses: 0 },
+      { code: 'EPIC-2A1B', reward: 10000, maxUses: 1, currentUses: 0 },
+      { code: 'EPIC-5C3D', reward: 10000, maxUses: 1, currentUses: 0 },
+      { code: 'EPIC-8E7F', reward: 10000, maxUses: 1, currentUses: 0 },
+      { code: 'EPIC-4G6H', reward: 10000, maxUses: 1, currentUses: 0 },
+      { code: 'MEGA-1J2K', reward: 10000, maxUses: 1, currentUses: 0 },
+      { code: 'MEGA-9L8M', reward: 10000, maxUses: 1, currentUses: 0 },
+      { code: 'MEGA-3N4P', reward: 10000, maxUses: 1, currentUses: 0 },
+      { code: 'MEGA-7Q6R', reward: 10000, maxUses: 1, currentUses: 0 },
+      { code: 'MEGA-2S1T', reward: 10000, maxUses: 1, currentUses: 0 },
+      { code: 'LUCK-8V9W', reward: 10000, maxUses: 1, currentUses: 0 },
+      { code: 'LUCK-4X3Y', reward: 10000, maxUses: 1, currentUses: 0 },
+      { code: 'LUCK-6Z5A', reward: 10000, maxUses: 1, currentUses: 0 },
+      { code: 'LUCK-1B2C', reward: 10000, maxUses: 1, currentUses: 0 },
+      { code: 'LUCK-9D8E', reward: 10000, maxUses: 1, currentUses: 0 },
+      { code: 'WIN-3F4G', reward: 10000, maxUses: 1, currentUses: 0 },
+      { code: 'WIN-7H6J', reward: 10000, maxUses: 1, currentUses: 0 },
+      { code: 'WIN-2K1L', reward: 10000, maxUses: 1, currentUses: 0 },
+      { code: 'WIN-5M9N', reward: 10000, maxUses: 1, currentUses: 0 },
+      { code: 'WIN-8P3Q', reward: 10000, maxUses: 1, currentUses: 0 },
+
+      // 30 Generated 1k Codes (5 Uses)
+      { code: 'BOOST-1A2B', reward: 1000, maxUses: 5, currentUses: 0 },
+      { code: 'BOOST-3C4D', reward: 1000, maxUses: 5, currentUses: 0 },
+      { code: 'BOOST-5E6F', reward: 1000, maxUses: 5, currentUses: 0 },
+      { code: 'BOOST-7G8H', reward: 1000, maxUses: 5, currentUses: 0 },
+      { code: 'BOOST-9I0J', reward: 1000, maxUses: 5, currentUses: 0 },
+      { code: 'STAR-2K3L', reward: 1000, maxUses: 5, currentUses: 0 },
+      { code: 'STAR-4M5N', reward: 1000, maxUses: 5, currentUses: 0 },
+      { code: 'STAR-6O7P', reward: 1000, maxUses: 5, currentUses: 0 },
+      { code: 'STAR-8Q9R', reward: 1000, maxUses: 5, currentUses: 0 },
+      { code: 'STAR-0S1T', reward: 1000, maxUses: 5, currentUses: 0 },
+      { code: 'COIN-1U2V', reward: 1000, maxUses: 5, currentUses: 0 },
+      { code: 'COIN-3W4X', reward: 1000, maxUses: 5, currentUses: 0 },
+      { code: 'COIN-5Y6Z', reward: 1000, maxUses: 5, currentUses: 0 },
+      { code: 'COIN-7A8B', reward: 1000, maxUses: 5, currentUses: 0 },
+      { code: 'COIN-9C0D', reward: 1000, maxUses: 5, currentUses: 0 },
+      { code: 'CASH-2E3F', reward: 1000, maxUses: 5, currentUses: 0 },
+      { code: 'CASH-4G5H', reward: 1000, maxUses: 5, currentUses: 0 },
+      { code: 'CASH-6I7J', reward: 1000, maxUses: 5, currentUses: 0 },
+      { code: 'CASH-8K9L', reward: 1000, maxUses: 5, currentUses: 0 },
+      { code: 'CASH-0M1N', reward: 1000, maxUses: 5, currentUses: 0 },
+      { code: 'DROP-1O2P', reward: 1000, maxUses: 5, currentUses: 0 },
+      { code: 'DROP-3Q4R', reward: 1000, maxUses: 5, currentUses: 0 },
+      { code: 'DROP-5S6T', reward: 1000, maxUses: 5, currentUses: 0 },
+      { code: 'DROP-7U8V', reward: 1000, maxUses: 5, currentUses: 0 },
+      { code: 'DROP-9W0X', reward: 1000, maxUses: 5, currentUses: 0 },
+      { code: 'SEED-2Y3Z', reward: 1000, maxUses: 5, currentUses: 0 },
+      { code: 'SEED-4A5B', reward: 1000, maxUses: 5, currentUses: 0 },
+      { code: 'SEED-6C7D', reward: 1000, maxUses: 5, currentUses: 0 },
+      { code: 'SEED-8E9F', reward: 1000, maxUses: 5, currentUses: 0 },
+      { code: 'SEED-0G1H', reward: 1000, maxUses: 5, currentUses: 0 },
+  ],
   redeemedCodes: [],
   logs: [],
   chatHistory: [
       { id: 'sys1', username: 'SYSTEM', text: 'Welcome to Global Chat! Be respectful.', timestamp: Date.now(), role: 'ADMIN', isSystem: true },
-      { id: 'sys2', username: 'NinjaSlayer99', text: 'Anyone wanna trade?', timestamp: Date.now() - 50000, role: 'USER' }
   ],
   liveFeed: [],
-  motd: null,
+  motd: 'NEW SEASON! STATS WIPED. NO MORE EXPLOITS.',
   theme: 'default',
-  season: 1,
+  season: 2,
   scheduledEvents: [],
   
   // Initial Updates
   updates: [
-      { id: '1', version: 'v6.1.0', title: 'Balance Update', description: 'Removed experimental potion system. Returned to classic gameplay.', date: Date.now(), author: 'System' }
+      { id: '4', version: 'v6.4.0', title: 'System Optimization', description: 'Implemented Vercel Speed Insights for performance monitoring.', date: Date.now(), author: 'System' },
+      { id: '3', version: 'v6.3.0', title: 'Feature: Mining Rig', description: 'The Mining Rig is now available in the shop! Generate passive income while you play.', date: Date.now() - 360000, author: 'System' },
+      { id: '2', version: 'v6.2.0', title: 'Rebrand: CaseGambler', description: 'Welcome to CaseGambler! New shop items coming soon. System core updated.', date: Date.now() - 3600000, author: 'System' },
+      { id: '1', version: 'v6.1.0', title: 'Balance Update', description: 'Removed experimental potion system. Returned to classic gameplay.', date: Date.now() - 86400000, author: 'System' }
   ],
   
   // Fake Reports
-  reports: [
-      { id: 'r1', reporter: 'NinjaSlayer99', suspect: 'KaiCenatFan', reason: 'TOXIC', timestamp: Date.now() - 100000, status: 'PENDING' },
-      { id: 'r2', reporter: 'CaseOpenerPro', suspect: 'RandomUser123', reason: 'SCAM', timestamp: Date.now() - 500000, status: 'PENDING' },
-  ],
+  reports: [],
   
-  // Fake DB
-  userDatabase: {
-      'NinjaSlayer99': { username: 'NinjaSlayer99', role: 'USER', banned: false, balance: 15400000, level: 42, xp: 5000, premiumLevel: 2, inventoryCount: 84, lastLogin: '2 mins ago', luckMultiplier: 1, tags: ['VIP', 'WHALE'], inbox: [], stats: { totalSpent: 500000, totalValue: 15400000, casesOpened: 1200, sessionStart: Date.now() } },
-      'KaiCenatFan': { username: 'KaiCenatFan', role: 'USER', banned: false, balance: 12000000, level: 38, xp: 2000, premiumLevel: 0, inventoryCount: 120, lastLogin: '5 hours ago', luckMultiplier: 0.8, tags: [], inbox: [], stats: { totalSpent: 200000, totalValue: 12000000, casesOpened: 800, sessionStart: Date.now() - 3600000 } },
-      'CaseOpenerPro': { username: 'CaseOpenerPro', role: 'USER', banned: false, balance: 8500000, level: 35, xp: 8000, premiumLevel: 1, inventoryCount: 200, lastLogin: '1 day ago', luckMultiplier: 1.2, tags: ['TESTER'], inbox: [], stats: { totalSpent: 1000000, totalValue: 8500000, casesOpened: 5000, sessionStart: Date.now() - 86400000 } },
-      'LuckyStrike': { username: 'LuckyStrike', role: 'USER', banned: false, balance: 2100000, level: 20, xp: 1200, premiumLevel: 0, inventoryCount: 45, lastLogin: 'Just now', luckMultiplier: 1.1, tags: [], inbox: [], stats: { totalSpent: 50000, totalValue: 2100000, casesOpened: 200, sessionStart: Date.now() } },
-      'RNG_God': { username: 'RNG_God', role: 'MOD', banned: false, balance: 5000000, level: 29, xp: 4500, premiumLevel: 2, inventoryCount: 60, lastLogin: '1 min ago', luckMultiplier: 1.5, tags: ['VIP'], inbox: [], stats: { totalSpent: 100000, totalValue: 5000000, casesOpened: 600, sessionStart: Date.now() } },
-  }
+  // Real DB (Starts Empty)
+  userDatabase: {}
 };

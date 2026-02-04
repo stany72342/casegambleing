@@ -99,10 +99,10 @@ export const CoinFlip: React.FC<CoinFlipProps> = ({ gameState, onWin, removeBala
 
           <button
             onClick={flip}
-            disabled={!selectedSide || isFlipping || gameState.balance < betAmount}
+            disabled={!selectedSide || isFlipping || gameState.balance < betAmount || betAmount <= 0}
             className={`
               w-full py-4 rounded-xl font-black text-xl tracking-widest shadow-lg transition-all transform active:scale-95
-              ${!selectedSide || isFlipping || gameState.balance < betAmount
+              ${!selectedSide || isFlipping || gameState.balance < betAmount || betAmount <= 0
                 ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
                 : 'bg-gradient-to-r from-yellow-500 to-orange-600 text-white hover:shadow-orange-500/50'}
             `}
