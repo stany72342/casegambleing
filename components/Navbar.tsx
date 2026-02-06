@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Package, Dna, Coins, Menu, X, Trophy, ShoppingBag, LogOut, User, TrendingUp, BookOpen, Terminal, Mail, Bell, Dice5 } from 'lucide-react';
+import { LayoutDashboard, Package, Dna, Coins, Menu, X, Trophy, ShoppingBag, LogOut, User, TrendingUp, BookOpen, Terminal, Mail, Bell, Dice5, Flag } from 'lucide-react';
 import { GameState } from '../types';
 import { XP_PER_LEVEL_BASE, XP_MULTIPLIER } from '../constants';
 
@@ -31,6 +31,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab, gameState, o
 
   const navItems = [
     { id: 'cases', label: 'Cases', icon: LayoutDashboard },
+    { id: 'battlepass', label: 'Battle Pass', icon: Flag },
     { id: 'inventory', label: 'Inventory', icon: Package },
     { id: 'shop', label: 'Shop', icon: ShoppingBag, disabled: !gameState.config.featureToggles.shop },
     { id: 'casino', label: 'Casino', icon: Dice5, active: isCasinoActive },

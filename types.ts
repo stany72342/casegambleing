@@ -12,6 +12,7 @@ export enum Rarity {
 
 export type ItemType = 'equipment' | 'character' | 'key' | 'artifact';
 export type Role = 'USER' | 'MOD' | 'ADMIN' | 'OWNER';
+export type ItemWear = 'Factory New' | 'Minimal Wear' | 'Field-Tested' | 'Well-Worn' | 'Battle-Scarred';
 
 export interface Item {
   id: string;
@@ -22,6 +23,10 @@ export interface Item {
   icon: string;
   type: ItemType;
   obtainedAt: number;
+  // Inspection Data
+  wear?: ItemWear;
+  float?: number;
+  pattern?: number;
 }
 
 export interface ItemTemplate {
@@ -198,6 +203,19 @@ export interface GameConfig {
     };
 }
 
+// New Types for Battle Pass
+export interface BattlePassReward {
+    type: 'coins' | 'item';
+    value: number | string;
+    label?: string;
+}
+
+export interface BattlePassLevel {
+    level: number;
+    freeReward: BattlePassReward;
+    premiumReward: BattlePassReward;
+}
+
 export interface UserAccount {
     username: string;
     role: Role;
@@ -214,6 +232,10 @@ export interface UserAccount {
     lastLogin: string;
     inbox: InboxMessage[]; 
     
+    // Battle Pass
+    bpClaimedFree: number[]; // Array of level IDs claimed
+    bpClaimedPremium: number[]; 
+
     // Legacy Fields (Deprecated but kept for compat)
     luckMultiplier: number;
     
@@ -278,6 +300,10 @@ export interface GameState {
   season: number;
   scheduledEvents: ScheduledEvent[];
   inbox: InboxMessage[]; 
+  
+  // Current Session BP state (synced with userDatabase)
+  bpClaimedFree: number[]; 
+  bpClaimedPremium: number[];
 }
 
 export const RARITY_COLORS = {

@@ -9,12 +9,15 @@ import { Roulette } from './components/Roulette';
 import { Mines } from './components/Mines';
 import { CoinFlip } from './components/CoinFlip';
 import { HighLow } from './components/HighLow';
+import { Plinko } from './components/Plinko';
 import { Shop } from './components/Shop';
 import { Login } from './components/Login';
 import { AdminPanel } from './components/AdminPanel';
 import { Stats } from './components/Stats';
 import { Catalog } from './components/Catalog';
 import { CasinoHub } from './components/CasinoHub'; 
+import { Leaderboard } from './components/Leaderboard';
+import { BattlePass } from './components/BattlePass';
 import { SplashPage } from './components/SplashPage';
 import { useGameState } from './hooks/useGameState';
 import * as Icons from 'lucide-react';
@@ -48,6 +51,7 @@ const App = () => {
     addXp, 
     setLevel,
     claimDailyReward,
+    claimBpReward,
     getNextRarity,
     getItemsByRarity,
     resetGame,
@@ -111,13 +115,19 @@ const App = () => {
     reportUser
   } = useGameState();
 
+  // Helper for tracking plays
+  const recordPlay = () => {
+      addXp(1); // 1 Play = 1 XP Unit in new system
+  };
+
   const handleCaseOpen = (caseId: string) => {
     const item = openCase(caseId); 
+    if (item) recordPlay();
     return item;
   };
 
   const handleWinItem = (templateId: string) => {
-      addXp(10);
+      // Logic handled in openCase, this is visual callback
   };
 
   const handleUpgradeAttempt = (itemId: string, targetTemplateId: string, chance: number) => {
@@ -127,7 +137,8 @@ const App = () => {
       removeItem(itemId); 
       if (success) {
           addItem(targetTemplateId);
-          addXp(50);
+          // Upgrade does not count as a 'play' in this new system, or maybe it should?
+          // User said "games played". Let's assume upgrade isn't a casino game.
           return true;
       }
       return false;
@@ -136,8 +147,7 @@ const App = () => {
   const handleBuyItem = (template: ItemTemplate, price: number) => {
       if (gameState.balance >= price) {
           removeBalance(price);
-          addItem(template.id);
-          addXp(5);
+          addItem(template.id, price); // Pass price to set correct value
           alert(`You bought ${template.name}!`);
       }
   };
@@ -231,7 +241,7 @@ const App = () => {
       return true;
   };
 
-  if (!isTabEnabled(currentTab) && currentTab !== 'cases' && currentTab !== 'casino') {
+  if (!isTabEnabled(currentTab) && currentTab !== 'cases' && currentTab !== 'casino' && currentTab !== 'leaderboard' && currentTab !== 'battlepass') {
       setTab('cases');
   }
 
@@ -448,6 +458,10 @@ const App = () => {
               </>
           )}
           
+          {currentTab === 'battlepass' && (
+              <BattlePass gameState={gameState} onClaim={claimBpReward} />
+          )}
+
           {currentTab === 'inventory' && (
               <Inventory gameState={gameState} onSell={sellItem} onSellBulk={sellItems} />
           )}
@@ -470,7 +484,7 @@ const App = () => {
                       gameState={gameState}
                       onGameEnd={(amount) => {
                           addBalance(amount);
-                          addXp(15);
+                          recordPlay();
                       }}
                       removeBalance={removeBalance}
                   />
@@ -486,7 +500,7 @@ const App = () => {
                       gameState={gameState}
                       onWin={(amount) => {
                           addBalance(amount);
-                          addXp(20);
+                          recordPlay();
                       }}
                       removeBalance={removeBalance}
                   />
@@ -502,7 +516,7 @@ const App = () => {
                       gameState={gameState}
                       onGameEnd={(amount) => {
                           addBalance(amount);
-                          addXp(25);
+                          // No XP for Mines
                       }}
                       removeBalance={removeBalance}
                   />
@@ -518,7 +532,7 @@ const App = () => {
                       gameState={gameState}
                       onSpinResult={(amount) => {
                           addBalance(amount);
-                          addXp(5);
+                          recordPlay();
                       }}
                       removeBalance={removeBalance}
                   />
@@ -534,7 +548,7 @@ const App = () => {
                       gameState={gameState}
                       onWin={(amount) => {
                           addBalance(amount);
-                          addXp(10);
+                          recordPlay();
                       }}
                       removeBalance={removeBalance}
                   />
@@ -550,7 +564,23 @@ const App = () => {
                       gameState={gameState}
                       onGameEnd={(amount) => {
                           addBalance(amount);
-                          addXp(15);
+                          recordPlay();
+                      }}
+                      removeBalance={removeBalance}
+                  />
+              </div>
+          )}
+
+          {currentTab === 'plinko' && (
+              <div className="space-y-4">
+                  <button onClick={() => setTab('casino')} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+                      <Icons.ArrowLeft size={20} /> Back to Casino
+                  </button>
+                  <Plinko
+                      gameState={gameState}
+                      onWin={(amount) => {
+                          addBalance(amount);
+                          // No XP for Plinko
                       }}
                       removeBalance={removeBalance}
                   />
@@ -559,6 +589,10 @@ const App = () => {
 
           {currentTab === 'stats' && (
               <Stats gameState={gameState} onRedeemCode={redeemPromoCode} />
+          )}
+
+          {currentTab === 'leaderboard' && (
+              <Leaderboard gameState={gameState} />
           )}
 
           {currentTab === 'catalog' && (

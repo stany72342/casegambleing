@@ -1,7 +1,21 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { GameState, Item, ItemTemplate, Rarity, RARITY_ORDER, AuctionListing, TradeOffer, PromoCode, LogEntry, Role, Case, GameConfig, ScheduledEvent, UserAccount, Announcement, ShopEntry, ActiveGiveaway, InboxMessage, GameUpdate, GameSettings, ChatMessage, UserReport, DropFeedEntry, RARITY_COLORS } from '../types';
-import { DEFAULT_ITEMS, DEFAULT_CASES, INITIAL_STATE, XP_PER_LEVEL_BASE, XP_MULTIPLIER, BAD_WORDS, FAKE_MESSAGES } from '../constants';
+import { GameState, Item, ItemTemplate, Rarity, RARITY_ORDER, AuctionListing, TradeOffer, PromoCode, LogEntry, Role, Case, GameConfig, ScheduledEvent, UserAccount, Announcement, ShopEntry, ActiveGiveaway, InboxMessage, GameUpdate, GameSettings, ChatMessage, UserReport, DropFeedEntry, RARITY_COLORS, ItemWear } from '../types';
+import { DEFAULT_ITEMS, DEFAULT_CASES, INITIAL_STATE, XP_PER_LEVEL_BASE, XP_MULTIPLIER, BAD_WORDS, FAKE_MESSAGES, BATTLE_PASS_LEVELS } from '../constants';
 import { DatabaseService } from '../services/DatabaseService';
+
+// Helper defined outside to ensure availability
+const generateItemStats = () => {
+    const float = Math.random();
+    const pattern = Math.floor(Math.random() * 999) + 1;
+    let wear: ItemWear = 'Factory New';
+    
+    if (float > 0.45) wear = 'Battle-Scarred';
+    else if (float > 0.38) wear = 'Well-Worn';
+    else if (float > 0.15) wear = 'Field-Tested';
+    else if (float > 0.07) wear = 'Minimal Wear';
+    
+    return { float, pattern, wear };
+};
 
 export const useGameState = () => {
   const [gameState, setGameState] = useState<GameState>(INITIAL_STATE);
@@ -19,6 +33,9 @@ export const useGameState = () => {
     if (!data.stats.totalGamesPlayed) {
         data.stats.totalGamesPlayed = 0;
     }
+    // Init BP if missing
+    if (!data.bpClaimedFree) data.bpClaimedFree = [];
+    if (!data.bpClaimedPremium) data.bpClaimedPremium = [];
     
     setGameState(data);
     stateRef.current = data;
@@ -107,7 +124,6 @@ export const useGameState = () => {
               let configChanged = false;
 
               // 1. Daily Luck Event (16:00 - 16:30)
-              // Overrides other events for simplicity in this demo
               const isHappyHour = currentHour === 16 && currentMinute >= 0 && currentMinute < 30;
               
               if (isHappyHour) {
@@ -117,12 +133,11 @@ export const useGameState = () => {
                       configChanged = true;
                   }
               } else if (prev.config.activeEvent === 'LUCKY HAPPY HOUR') {
-                  // Event ended
                   newState.config.activeEvent = null;
                   newState.config.globalLuckMultiplier = 1.0;
                   configChanged = true;
               } else {
-                  // 2. Scheduled Custom Events (Only if not Happy Hour)
+                  // 2. Scheduled Custom Events
                   const activeEvents = prev.scheduledEvents.filter(e => e.startTime <= now && (e.startTime + e.durationMinutes * 60000) > now);
                   const currentEvent = activeEvents.length > 0 ? activeEvents[activeEvents.length - 1] : null;
 
@@ -160,7 +175,6 @@ export const useGameState = () => {
     if (username === 'StashyM' && password === 'september') role = 'OWNER';
     if (username === 'admacc2' && password === '123kebab/5') role = 'MOD';
 
-    // Simulate IP (since we don't have a backend to get real IP)
     const fakeIp = `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`;
 
     setGameState(prev => {
@@ -171,25 +185,32 @@ export const useGameState = () => {
         }
         const effectiveRole = existingUser ? existingUser.role : role;
         
+        // Use existing inventory or empty
+        const userInventory = existingUser ? (existingUser.inventory || []) : [];
+
         const newUserData: UserAccount = existingUser ? {
             ...existingUser,
-            ip: fakeIp, // Update IP on login
-            lastLogin: new Date().toISOString()
+            ip: fakeIp, 
+            lastLogin: new Date().toISOString(),
+            inventory: userInventory // Ensure inventory is synced
         } : {
             username,
             role: effectiveRole,
             banned: false,
-            ip: fakeIp, // Set IP for new user
+            ip: fakeIp,
             balance: prev.balance,
             level: prev.level,
             xp: prev.xp,
             premiumLevel: 0,
             miningLevel: 0,
-            inventoryCount: prev.inventory.length,
+            inventoryCount: 0,
+            inventory: [],
             lastLogin: new Date().toISOString(),
             luckMultiplier: 1, 
             tags: [],
             inbox: [],
+            bpClaimedFree: [],
+            bpClaimedPremium: [],
             stats: { totalSpent: 0, totalValue: 0, casesOpened: 0, sessionStart: Date.now() }
         };
         
@@ -200,13 +221,14 @@ export const useGameState = () => {
             isAdmin: effectiveRole === 'ADMIN' || effectiveRole === 'OWNER' || effectiveRole === 'MOD',
             rememberMe,
             balance: (effectiveRole === 'OWNER' || effectiveRole === 'ADMIN') ? 999999999 : (existingUser ? existingUser.balance : prev.balance),
-            
-            // Restore persistent states
             level: existingUser ? existingUser.level : prev.level,
             xp: existingUser ? (existingUser.xp || 0) : prev.xp,
             isPremium: existingUser ? (existingUser.premiumLevel > 0) : false,
             premiumLevel: existingUser ? (existingUser.premiumLevel || 0) : 0,
             miningLevel: existingUser ? (existingUser.miningLevel || 0) : 0,
+            bpClaimedFree: existingUser ? (existingUser.bpClaimedFree || []) : [],
+            bpClaimedPremium: existingUser ? (existingUser.bpClaimedPremium || []) : [],
+            inventory: userInventory, // Load inventory into state
 
             userDatabase: { ...prev.userDatabase, [username]: newUserData },
             inbox: existingUser ? (existingUser.inbox || []) : []
@@ -214,31 +236,29 @@ export const useGameState = () => {
     });
   }, []);
 
-  const logout = useCallback(() => setGameState(prev => ({ ...prev, username: null, isAdmin: false, role: 'USER', inbox: [] })), []);
+  const logout = useCallback(() => setGameState(prev => ({ ...prev, username: null, isAdmin: false, role: 'USER', inbox: [], inventory: [] })), []);
 
   // Core Actions
   const addBalance = useCallback((a: number) => setGameState(p => {
-      const safeAmount = Math.max(0, isNaN(a) ? 0 : a); // Ensure positive
+      const safeAmount = Math.max(0, isNaN(a) ? 0 : a); 
       return { ...p, balance: p.balance + safeAmount };
   }), []);
 
   const removeBalance = useCallback((a: number) => setGameState(p => {
-       const safeAmount = Math.max(0, isNaN(a) ? 0 : a); // Anti-exploit: Ensure positive
+       const safeAmount = Math.max(0, isNaN(a) ? 0 : a); 
        if (safeAmount <= 0) return p; 
        if (p.balance < safeAmount) return p;
        return { ...p, balance: p.balance - safeAmount };
   }), []);
 
   const addXp = useCallback((amount: number) => {
-      // In the new system, 'amount' is treated as 'number of plays'
       setGameState(p => {
           const playsToAdd = Math.max(0, amount);
-          let newXp = p.xp + playsToAdd; // 'xp' field used as current plays progress towards next level
+          let newXp = p.xp + playsToAdd; 
           let currentLevel = p.level;
           let leveledUp = false;
           let totalGamesPlayed = (p.stats.totalGamesPlayed || 0) + playsToAdd;
 
-          // Loop for multi-level jumps based on Play Count Thresholds
           while (true) {
               const playsForNext = Math.floor(XP_PER_LEVEL_BASE * Math.pow(XP_MULTIPLIER, currentLevel - 1));
               if (newXp >= playsForNext) {
@@ -250,7 +270,6 @@ export const useGameState = () => {
               }
           }
 
-          // SYNC TO DB
           const newDB = { ...p.userDatabase };
           if (p.username && newDB[p.username]) {
               newDB[p.username] = {
@@ -266,10 +285,7 @@ export const useGameState = () => {
               level: currentLevel, 
               showLevelUp: leveledUp || p.showLevelUp, 
               userDatabase: newDB,
-              stats: {
-                  ...p.stats,
-                  totalGamesPlayed: totalGamesPlayed
-              }
+              stats: { ...p.stats, totalGamesPlayed }
           };
       });
   }, []);
@@ -284,13 +300,81 @@ export const useGameState = () => {
         return prev;
       }
       const reward = 500 * prev.level;
-      return {
-        ...prev,
-        balance: prev.balance + reward,
-        lastDailyReward: now,
-        // No XP/Play count for daily reward
-      };
+      return { ...prev, balance: prev.balance + reward, lastDailyReward: now };
     });
+  }, []);
+
+  const claimBpReward = useCallback((level: number, type: 'free' | 'premium') => {
+      setGameState(prev => {
+          if (type === 'premium' && !prev.isPremium) {
+              alert("Premium Pass Required");
+              return prev;
+          }
+          if (prev.level < level) {
+              alert("Level requirement not met");
+              return prev;
+          }
+          
+          const alreadyClaimed = type === 'free' 
+            ? (prev.bpClaimedFree || []).includes(level) 
+            : (prev.bpClaimedPremium || []).includes(level);
+            
+          if (alreadyClaimed) return prev;
+
+          const levelData = BATTLE_PASS_LEVELS.find(l => l.level === level);
+          if (!levelData) return prev;
+
+          const reward = type === 'free' ? levelData.freeReward : levelData.premiumReward;
+          let newBalance = prev.balance;
+          let newInventory = [...prev.inventory];
+
+          if (reward.type === 'coins') {
+              newBalance += reward.value as number;
+          } else if (reward.type === 'item') {
+              const pool = (Object.values(prev.items) as ItemTemplate[]).filter(i => i.rarity === 'RARE' || i.rarity === 'EPIC');
+              const tmpl = pool[Math.floor(Math.random() * pool.length)];
+              if (tmpl) {
+                  const { float, pattern, wear } = generateItemStats();
+                  newInventory.push({
+                      id: crypto.randomUUID(),
+                      templateId: tmpl.id,
+                      name: tmpl.name,
+                      rarity: tmpl.rarity,
+                      value: tmpl.baseValue,
+                      icon: tmpl.icon,
+                      type: tmpl.type,
+                      obtainedAt: Date.now(),
+                      float,
+                      pattern,
+                      wear
+                  });
+              }
+          }
+
+          const newFree = type === 'free' ? [...(prev.bpClaimedFree || []), level] : prev.bpClaimedFree;
+          const newPremium = type === 'premium' ? [...(prev.bpClaimedPremium || []), level] : prev.bpClaimedPremium;
+
+          const newDB = { ...prev.userDatabase };
+          if (prev.username && newDB[prev.username]) {
+              newDB[prev.username] = {
+                  ...newDB[prev.username],
+                  bpClaimedFree: newFree,
+                  bpClaimedPremium: newPremium,
+                  balance: newBalance,
+                  inventoryCount: newInventory.length,
+                  inventory: newInventory // Fix: Save Inventory
+              };
+          }
+
+          return {
+              ...prev,
+              balance: newBalance,
+              inventory: newInventory,
+              bpClaimedFree: newFree,
+              bpClaimedPremium: newPremium,
+              userDatabase: newDB
+          };
+      });
   }, []);
 
   const openCase = useCallback((caseId: string) => {
@@ -314,7 +398,7 @@ export const useGameState = () => {
               const weightedItems = box.contains.map(c => {
                 const item = prev.items[c.templateId];
                 let weight = c.weight;
-                if (item && ['LEGENDARY', 'MYTHIC', 'CONTRABAND', 'GODLIKE'].includes(item.rarity)) {
+                if (item && ['LEGENDARY', 'MYTHIC', 'CONTRABAND', 'GODLIKE', 'DARK_MATTER'].includes(item.rarity)) {
                     weight = weight * totalLuck;
                 }
                 return { ...c, calculatedWeight: weight };
@@ -333,6 +417,9 @@ export const useGameState = () => {
           }
 
           if (!resultItem) return prev;
+          
+          const { float, pattern, wear } = generateItemStats();
+
           const newItem: Item = {
               id: crypto.randomUUID(),
               templateId: resultItem.id,
@@ -342,6 +429,9 @@ export const useGameState = () => {
               icon: resultItem.icon,
               type: resultItem.type,
               obtainedAt: Date.now(),
+              float,
+              pattern,
+              wear
           };
 
           let newInventory = [newItem, ...prev.inventory];
@@ -350,6 +440,7 @@ export const useGameState = () => {
               updatedUserDB[prev.username] = { 
                   ...updatedUserDB[prev.username], 
                   inventoryCount: newInventory.length,
+                  inventory: newInventory, // Fix: Save Inventory
                   stats: {
                       ...updatedUserDB[prev.username].stats,
                       casesOpened: updatedUserDB[prev.username].stats.casesOpened + 1
@@ -383,33 +474,65 @@ export const useGameState = () => {
                   legendariesPulled: resultItem.rarity === 'LEGENDARY' ? prev.stats.legendariesPulled + 1 : prev.stats.legendariesPulled,
                   mythicsPulled: resultItem.rarity === 'MYTHIC' ? prev.stats.mythicsPulled + 1 : prev.stats.mythicsPulled,
                   contrabandsPulled: resultItem.rarity === 'CONTRABAND' ? prev.stats.contrabandsPulled + 1 : prev.stats.contrabandsPulled,
-                  // totalGamesPlayed is handled via addXp call in App.tsx
               }
           };
       });
       return resultItem;
   }, [getMultipliers]);
 
-  const addItem = useCallback((templateId: string) => {
+  const addItem = useCallback((templateId: string, customValue?: number) => {
       setGameState(prev => {
           const tmpl = prev.items[templateId];
           if(!tmpl) return prev;
+          
+          const { float, pattern, wear } = generateItemStats();
+
           const newItem: Item = {
             id: crypto.randomUUID(),
             templateId: tmpl.id,
             name: tmpl.name,
             rarity: tmpl.rarity,
-            value: tmpl.baseValue,
+            value: customValue !== undefined ? customValue : tmpl.baseValue, // Support Custom Value (Shop)
             icon: tmpl.icon,
             type: tmpl.type,
             obtainedAt: Date.now(),
+            float,
+            pattern,
+            wear
           };
-          return { ...prev, inventory: [newItem, ...prev.inventory] };
+          
+          const newInventory = [newItem, ...prev.inventory];
+          
+          // Sync to DB
+          const newDB = { ...prev.userDatabase };
+          if (prev.username && newDB[prev.username]) {
+              newDB[prev.username] = {
+                  ...newDB[prev.username],
+                  inventory: newInventory,
+                  inventoryCount: newInventory.length
+              };
+          }
+
+          return { ...prev, inventory: newInventory, userDatabase: newDB };
       });
   }, []);
 
   const removeItem = useCallback((itemId: string) => {
-      setGameState(prev => ({ ...prev, inventory: prev.inventory.filter(i => i.id !== itemId) }));
+      setGameState(prev => {
+          const newInventory = prev.inventory.filter(i => i.id !== itemId);
+          
+          // Sync to DB
+          const newDB = { ...prev.userDatabase };
+          if (prev.username && newDB[prev.username]) {
+              newDB[prev.username] = {
+                  ...newDB[prev.username],
+                  inventory: newInventory,
+                  inventoryCount: newInventory.length
+              };
+          }
+          
+          return { ...prev, inventory: newInventory, userDatabase: newDB };
+      });
   }, []);
 
   const sellItem = useCallback((itemId: string) => {
@@ -417,10 +540,24 @@ export const useGameState = () => {
           const item = prev.inventory.find(i => i.id === itemId);
           if (!item) return prev;
           const sellVal = Math.floor(item.value * prev.config.sellValueMultiplier);
+          const newInventory = prev.inventory.filter(i => i.id !== itemId);
+          
+          // Sync to DB
+          const newDB = { ...prev.userDatabase };
+          if (prev.username && newDB[prev.username]) {
+              newDB[prev.username] = {
+                  ...newDB[prev.username],
+                  inventory: newInventory,
+                  inventoryCount: newInventory.length,
+                  balance: prev.balance + sellVal
+              };
+          }
+
           return {
               ...prev,
               balance: prev.balance + sellVal,
-              inventory: prev.inventory.filter(i => i.id !== itemId)
+              inventory: newInventory,
+              userDatabase: newDB
           };
       });
   }, []);
@@ -435,11 +572,23 @@ export const useGameState = () => {
               }
               return true;
           });
-          return { ...prev, balance: prev.balance + totalSell, inventory: newInv };
+          
+          // Sync to DB
+          const newDB = { ...prev.userDatabase };
+          if (prev.username && newDB[prev.username]) {
+              newDB[prev.username] = {
+                  ...newDB[prev.username],
+                  inventory: newInv,
+                  inventoryCount: newInv.length,
+                  balance: prev.balance + totalSell
+              };
+          }
+
+          return { ...prev, balance: prev.balance + totalSell, inventory: newInv, userDatabase: newDB };
       });
   }, []);
 
-  // --- STUBS FOR MISSING FUNCTIONS ---
+  // --- STUBS & UTILS ---
 
   const buyAuctionItem = useCallback((listingId: string) => {}, []);
   const listUserItem = useCallback((itemId: string, price: number) => {}, []);
@@ -484,7 +633,6 @@ export const useGameState = () => {
           if (promo.maxUses !== -1 && promo.currentUses >= promo.maxUses) { alert("Code fully redeemed"); return prev; }
           if (prev.redeemedCodes.includes(code)) { alert("Already redeemed"); return prev; }
           
-          // Apply
           return {
               ...prev,
               balance: prev.balance + promo.reward,
@@ -505,21 +653,30 @@ export const useGameState = () => {
   const adminAddCoins = useCallback((user: string, amount: number) => {
        setGameState(p => {
            const newDB = {...p.userDatabase};
-           if (newDB[user]) newDB[user] = {...newDB[user], balance: newDB[user].balance + amount};
+           const target = newDB[user];
+           if (target) {
+               newDB[user] = {...target, balance: target.balance + amount};
+           }
            return {...p, userDatabase: newDB};
        });
   }, []);
   const adminSetRole = useCallback((user: string, role: Role) => {
       setGameState(p => {
            const newDB = {...p.userDatabase};
-           if (newDB[user]) newDB[user] = {...newDB[user], role};
+           const target = newDB[user];
+           if (target) {
+               newDB[user] = {...target, role};
+           }
            return {...p, userDatabase: newDB};
        });
   }, []);
   const adminBanUser = useCallback((user: string) => {
       setGameState(p => {
            const newDB = {...p.userDatabase};
-           if (newDB[user]) newDB[user] = {...newDB[user], banned: true};
+           const target = newDB[user];
+           if (target) {
+               newDB[user] = {...target, banned: true};
+           }
            return {...p, userDatabase: newDB};
        });
   }, []);
@@ -550,21 +707,30 @@ export const useGameState = () => {
   const adminKickUser = useCallback((user: string) => {
        setGameState(p => {
            const newDB = {...p.userDatabase};
-           if (newDB[user]) newDB[user] = {...newDB[user], kicked: true};
+           const target = newDB[user];
+           if (target) {
+               newDB[user] = {...target, kicked: true};
+           }
            return {...p, userDatabase: newDB};
        });
   }, []);
   const adminWipeUser = useCallback((user: string) => {
       setGameState(p => {
            const newDB = {...p.userDatabase};
-           if (newDB[user]) newDB[user] = {...newDB[user], balance: 0, inventory: [], inventoryCount: 0};
+           const target = newDB[user];
+           if (target) {
+               newDB[user] = {...target, balance: 0, inventory: [], inventoryCount: 0};
+           }
            return {...p, userDatabase: newDB};
        });
   }, []);
   const adminMuteUser = useCallback((user: string) => {
        setGameState(p => {
            const newDB = {...p.userDatabase};
-           if (newDB[user]) newDB[user] = {...newDB[user], muted: true};
+           const target = newDB[user];
+           if (target) {
+               newDB[user] = {...target, muted: true};
+           }
            return {...p, userDatabase: newDB};
        });
   }, []);
@@ -609,8 +775,12 @@ export const useGameState = () => {
   const adminRemoveItemFromUser = useCallback((user: string, itemId: string) => {
       setGameState(p => {
            const newDB = {...p.userDatabase};
-           if (newDB[user] && newDB[user].inventory) {
-                newDB[user].inventory = newDB[user].inventory!.filter(i => i.id !== itemId);
+           const targetUser = newDB[user];
+           if (targetUser && targetUser.inventory) {
+                newDB[user] = {
+                    ...targetUser,
+                    inventory: targetUser.inventory.filter(i => i.id !== itemId)
+                };
            }
            if (user === p.username) {
                return {...p, userDatabase: newDB, inventory: p.inventory.filter(i => i.id !== itemId)};
@@ -624,24 +794,26 @@ export const useGameState = () => {
   const setAdminNotes = useCallback((user: string, note: string) => {
        setGameState(p => {
            const newDB = {...p.userDatabase};
-           if (newDB[user]) newDB[user] = {...newDB[user], adminNotes: note};
+           const target = newDB[user];
+           if (target) {
+               newDB[user] = {...target, adminNotes: note};
+           }
            return {...p, userDatabase: newDB};
        });
   }, []);
   const resolveReport = useCallback((id: string, status: 'RESOLVED' | 'DISMISSED') => {
-      setGameState(p => ({...p, reports: p.reports.map(r => r.id === id ? {...r, status} : r)}));
+      setGameState(p => ({...p, reports: p.reports.map(r => r.id === id ? Object.assign({}, r, { status }) : r)}));
   }, []);
   const adminUpdateUser = useCallback((user: string, updates: Partial<UserAccount>) => {
        setGameState(p => {
-           const newDB = {...p.userDatabase};
+           const newDB = Object.assign({}, p.userDatabase);
            const currentUserData = newDB[user];
            
            if (currentUserData) {
-               newDB[user] = { ...currentUserData, ...updates };
+               newDB[user] = Object.assign({}, currentUserData, updates);
            }
 
            if (user === p.username) {
-               // We manually sync fields to avoid type collision with 'stats' and pollution with 'ip', 'adminNotes'
                const newState = { ...p, userDatabase: newDB };
                
                if (updates.balance !== undefined) newState.balance = updates.balance;
@@ -649,7 +821,6 @@ export const useGameState = () => {
                if (updates.xp !== undefined) newState.xp = updates.xp;
                if (updates.role !== undefined) newState.role = updates.role;
                if (updates.inventory !== undefined) newState.inventory = updates.inventory;
-               if (updates.inventoryCount !== undefined) newState.inventoryCount = updates.inventoryCount;
                
                if (updates.premiumLevel !== undefined) {
                    newState.premiumLevel = updates.premiumLevel;
@@ -700,6 +871,7 @@ export const useGameState = () => {
       addXp, 
       setLevel,
       claimDailyReward,
+      claimBpReward,
       openCase,
       addItem,
       removeItem,

@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { GameState, RARITY_COLORS, RARITY_ORDER, Rarity, ItemType } from '../types';
+import { GameState, RARITY_COLORS, RARITY_ORDER, Rarity, ItemType, Item } from '../types';
 import * as Icons from 'lucide-react';
 import { useGameState } from '../hooks/useGameState';
 
@@ -17,6 +17,7 @@ export const Inventory: React.FC<InventoryProps> = ({ gameState, onSell, onSellB
   const [isBulkMode, setIsBulkMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [inspectedItem, setInspectedItem] = useState<Item | null>(null);
   
   const ITEMS_PER_PAGE = 24;
 
@@ -113,9 +114,94 @@ export const Inventory: React.FC<InventoryProps> = ({ gameState, onSell, onSellB
       setSelectedTypes(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
   };
 
+  // Helper for float visual
+  const getFloatPercent = (float: number) => {
+      return Math.min(100, Math.max(0, float * 100));
+  };
+
   return (
     <div className="max-w-7xl mx-auto py-6 px-4 animate-in fade-in duration-500">
         
+        {/* INSPECT MODAL */}
+        {inspectedItem && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in fade-in zoom-in duration-200" onClick={() => setInspectedItem(null)}>
+                <div 
+                    className={`bg-slate-900 border-2 ${RARITY_COLORS[inspectedItem.rarity].border} max-w-2xl w-full rounded-3xl relative overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.8)] flex flex-col md:flex-row`}
+                    onClick={e => e.stopPropagation()}
+                >
+                    {/* Background Effect */}
+                    <div className={`absolute inset-0 ${RARITY_COLORS[inspectedItem.rarity].bg} opacity-5 pointer-events-none`}></div>
+
+                    {/* Left: Image */}
+                    <div className="w-full md:w-1/2 p-12 flex items-center justify-center bg-gradient-to-br from-slate-950 to-slate-900 relative">
+                        <div className={`absolute inset-0 opacity-20 ${RARITY_COLORS[inspectedItem.rarity].bg} blur-3xl`}></div>
+                        <div className={`relative z-10 transform scale-150 ${RARITY_COLORS[inspectedItem.rarity].text} drop-shadow-2xl`}>
+                            <LucideIcon name={inspectedItem.icon} size={160} />
+                        </div>
+                    </div>
+
+                    {/* Right: Info */}
+                    <div className="w-full md:w-1/2 p-8 bg-slate-900 flex flex-col">
+                        <div className="flex justify-between items-start mb-6">
+                            <div>
+                                <h2 className={`text-3xl font-black italic tracking-tighter ${RARITY_COLORS[inspectedItem.rarity].text}`}>{inspectedItem.name}</h2>
+                                <div className="text-sm font-bold text-slate-500 uppercase tracking-widest">{inspectedItem.type} | {inspectedItem.rarity}</div>
+                            </div>
+                            <button onClick={() => setInspectedItem(null)} className="text-slate-500 hover:text-white"><Icons.X size={24} /></button>
+                        </div>
+
+                        <div className="space-y-6 flex-1">
+                            {/* Wear */}
+                            <div className="bg-slate-950 p-4 rounded-xl border border-slate-800">
+                                <div className="flex justify-between text-sm font-bold text-slate-400 mb-2">
+                                    <span>Wear Rating</span>
+                                    <span className="text-white">{inspectedItem.wear || 'Unknown'}</span>
+                                </div>
+                                <div className="h-2 bg-slate-800 rounded-full overflow-hidden relative">
+                                    {/* Markers */}
+                                    <div className="absolute left-[7%] top-0 bottom-0 w-[1px] bg-slate-600 z-10" title="FN Limit"></div>
+                                    <div className="absolute left-[15%] top-0 bottom-0 w-[1px] bg-slate-600 z-10" title="MW Limit"></div>
+                                    <div className="absolute left-[38%] top-0 bottom-0 w-[1px] bg-slate-600 z-10" title="FT Limit"></div>
+                                    <div className="absolute left-[45%] top-0 bottom-0 w-[1px] bg-slate-600 z-10" title="WW Limit"></div>
+                                    
+                                    {/* Indicator */}
+                                    {inspectedItem.float !== undefined && (
+                                        <div 
+                                            className="absolute top-0 bottom-0 w-2 bg-white shadow-[0_0_10px_white] z-20"
+                                            style={{ left: `${getFloatPercent(inspectedItem.float)}%` }}
+                                        ></div>
+                                    )}
+                                    <div className="absolute inset-0 bg-gradient-to-r from-green-500 via-yellow-500 to-red-500 opacity-20"></div>
+                                </div>
+                                <div className="text-right text-[10px] font-mono text-slate-500 mt-1">Float: {inspectedItem.float?.toFixed(9) || 'N/A'}</div>
+                            </div>
+
+                            {/* Pattern */}
+                            <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 flex justify-between items-center">
+                                <div className="text-sm font-bold text-slate-400">Pattern Template</div>
+                                <div className="font-mono font-black text-xl text-blue-400">{inspectedItem.pattern || '---'}</div>
+                            </div>
+
+                            {/* Value */}
+                            <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 flex justify-between items-center">
+                                <div className="text-sm font-bold text-slate-400">Estimated Value</div>
+                                <div className="font-mono font-black text-xl text-green-400">${inspectedItem.value.toLocaleString()}</div>
+                            </div>
+                        </div>
+
+                        <div className="mt-8 flex gap-3">
+                            <button 
+                                onClick={() => { onSell(inspectedItem.id); setInspectedItem(null); }}
+                                className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
+                            >
+                                <Icons.DollarSign size={18} /> SELL NOW
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+
         {/* HEADER STATS */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 mb-6 flex flex-col md:flex-row justify-between items-center gap-6 shadow-xl">
             <div>
@@ -287,10 +373,13 @@ export const Inventory: React.FC<InventoryProps> = ({ gameState, onSell, onSellB
                         return (
                             <div 
                                 key={item.id}
-                                onClick={() => isBulkMode && toggleSelect(item.id)}
+                                onClick={() => {
+                                    if(isBulkMode) toggleSelect(item.id);
+                                    else setInspectedItem(item);
+                                }}
                                 className={`
-                                    relative group rounded-xl border transition-all duration-200 overflow-hidden bg-slate-900
-                                    ${isBulkMode ? 'cursor-pointer' : 'hover:-translate-y-1 hover:shadow-xl'}
+                                    relative group rounded-xl border transition-all duration-200 overflow-hidden bg-slate-900 cursor-pointer
+                                    ${!isBulkMode ? 'hover:-translate-y-1 hover:shadow-xl' : ''}
                                     ${isSelected ? 'border-yellow-500 ring-2 ring-yellow-500/30' : 'border-slate-800 hover:border-slate-600'}
                                 `}
                             >
@@ -298,6 +387,15 @@ export const Inventory: React.FC<InventoryProps> = ({ gameState, onSell, onSellB
                                 {isBulkMode && (
                                     <div className={`absolute top-2 right-2 z-10 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected ? 'bg-yellow-500 border-yellow-500' : 'bg-black/50 border-slate-500'}`}>
                                         {isSelected && <Icons.Check size={14} className="text-black stroke-[3]" />}
+                                    </div>
+                                )}
+
+                                {/* Hover Inspect Hint */}
+                                {!isBulkMode && (
+                                    <div className="absolute inset-0 z-20 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity pointer-events-none">
+                                        <div className="bg-slate-900/80 px-3 py-1 rounded-full text-xs font-bold text-white border border-white/20 backdrop-blur-sm">
+                                            INSPECT
+                                        </div>
                                     </div>
                                 )}
 
@@ -322,7 +420,7 @@ export const Inventory: React.FC<InventoryProps> = ({ gameState, onSell, onSellB
                                     </h3>
                                     <div className="flex justify-between items-center text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-2">
                                         <span>{item.type}</span>
-                                        <span>{item.rarity}</span>
+                                        <span className={item.wear ? 'text-slate-300' : ''}>{item.wear ? item.wear.split(' ')[0] : item.rarity}</span>
                                     </div>
 
                                     <div className="bg-black/30 rounded p-2 flex justify-between items-center border border-slate-800">
@@ -332,7 +430,7 @@ export const Inventory: React.FC<InventoryProps> = ({ gameState, onSell, onSellB
 
                                     {/* Actions (Only when not bulk) */}
                                     {!isBulkMode && (
-                                        <div className="mt-3 flex gap-2">
+                                        <div className="mt-3 flex gap-2 relative z-30">
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
