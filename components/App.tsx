@@ -252,11 +252,12 @@ const App = () => {
       {gameState.showLevelUp && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md animate-in fade-in">
               <div className="bg-slate-900 border-2 border-yellow-500 p-10 rounded-3xl text-center shadow-[0_0_100px_rgba(234,179,8,0.5)] max-w-md w-full relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-t from-yellow-900/20 to-transparent"></div>
-                  <Icons.Star size={80} className="text-yellow-400 mx-auto mb-6 animate-bounce drop-shadow-lg" />
-                  <h2 className="text-5xl font-black text-white mb-2">LEVEL UP!</h2>
-                  <p className="text-xl text-yellow-400 font-bold mb-6">You are now Level {gameState.level}</p>
-                  <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 mb-8">
+                  {/* Overlay must disable pointer events to allow clicking the button */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-yellow-900/20 to-transparent pointer-events-none"></div>
+                  <Icons.Star size={80} className="text-yellow-400 mx-auto mb-6 animate-bounce drop-shadow-lg relative z-10" />
+                  <h2 className="text-5xl font-black text-white mb-2 relative z-10">LEVEL UP!</h2>
+                  <p className="text-xl text-yellow-400 font-bold mb-6 relative z-10">You are now Level {gameState.level}</p>
+                  <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 mb-8 relative z-10">
                        <div className="text-slate-400 text-sm mb-2">Rewards Unlocked:</div>
                        <ul className="text-left text-sm space-y-2">
                            <li className="flex items-center gap-2 text-green-400"><Icons.Check size={16} /> +10% Sell Value Multiplier</li>
@@ -265,7 +266,7 @@ const App = () => {
                   </div>
                   <button 
                     onClick={() => setGameState(prev => ({ ...prev, showLevelUp: false }))}
-                    className="w-full py-4 bg-yellow-500 hover:bg-yellow-400 text-black font-black rounded-xl text-xl shadow-lg transition-transform hover:scale-105 active:scale-95"
+                    className="w-full py-4 bg-yellow-500 hover:bg-yellow-400 text-black font-black rounded-xl text-xl shadow-lg transition-transform hover:scale-105 active:scale-95 relative z-20 cursor-pointer"
                   >
                       AWESOME!
                   </button>
