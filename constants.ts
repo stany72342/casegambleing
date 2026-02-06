@@ -209,8 +209,9 @@ export const DEFAULT_CASES: Case[] = [
   }
 ];
 
-export const XP_PER_LEVEL_BASE = 100;
-export const XP_MULTIPLIER = 1.2;
+// RECONFIGURED FOR PLAY COUNT LEVELING (1 Play = 1 XP)
+export const XP_PER_LEVEL_BASE = 25; // First level needs 25 plays
+export const XP_MULTIPLIER = 1.1; // 10% increase per level
 
 export const BAD_WORDS = ['scam', 'hack', 'bot', 'cheat', 'fuck', 'shit', 'ass', 'nigger', 'faggot', 'retard', 'cunt', 'bitch', 'whore', 'dick', 'pussy'];
 
@@ -236,7 +237,7 @@ export const FAKE_MESSAGES = [
 ];
 
 export const INITIAL_STATE: GameState = {
-  dbVersion: 16, // Bumped for new wipe
+  dbVersion: 16, 
   username: null,
   role: 'USER',
   isAdmin: false, 
@@ -244,7 +245,7 @@ export const INITIAL_STATE: GameState = {
   premiumLevel: 0,
   rememberMe: false,
   balance: 200,
-  xp: 0,
+  xp: 0, // Now represents 'Plays towards level'
   level: 1,
   miningLevel: 0,
   showLevelUp: false, 
@@ -263,6 +264,7 @@ export const INITIAL_STATE: GameState = {
     legendariesPulled: 0,
     mythicsPulled: 0,
     contrabandsPulled: 0,
+    totalGamesPlayed: 0, // Initialize
   },
   lastDailyReward: 0,
   auctionListings: [],
@@ -379,24 +381,20 @@ export const INITIAL_STATE: GameState = {
       { id: 'sys1', username: 'SYSTEM', text: 'Welcome to Global Chat! Be respectful.', timestamp: Date.now(), role: 'ADMIN', isSystem: true },
   ],
   liveFeed: [],
-  motd: 'SEASON 2 IS LIVE! EVERYONE RESET TO $200.',
+  motd: 'SEASON 2: NEW LEVELING SYSTEM. PLAY GAMES TO LEVEL UP!',
   theme: 'default',
   season: 2,
   scheduledEvents: [],
   
   // Initial Updates
   updates: [
-      { id: '5', version: 'v7.0.0', title: 'Season 2 Wipe', description: 'All accounts have been reset to give everyone a fair start. Good luck!', date: Date.now(), author: 'System' },
-      { id: '4', version: 'v6.4.0', title: 'System Optimization', description: 'Implemented Vercel Speed Insights for performance monitoring.', date: Date.now() - 86400000, author: 'System' },
+      { id: '6', version: 'v7.1.0', title: 'System Update', description: 'Leveling system reworked: Levels are now based on games played. Mines and Plinko excluded from XP gain. Bots removed.', date: Date.now(), author: 'System' },
+      { id: '5', version: 'v7.0.0', title: 'Season 2 Wipe', description: 'All accounts have been reset to give everyone a fair start. Good luck!', date: Date.now() - 3600000, author: 'System' },
   ],
   
   // Fake Reports
   reports: [],
   
-  // Real DB with some default bots for leaderboard population
-  userDatabase: {
-      'Whale_Watcher': { username: 'Whale_Watcher', role: 'USER', banned: false, balance: 500, level: 3, xp: 200, premiumLevel: 0, miningLevel: 0, inventoryCount: 2, lastLogin: new Date().toISOString(), inbox: [], stats: { totalSpent: 0, totalValue: 0, casesOpened: 0, sessionStart: 0 }, inventory: [], tags: [], luckMultiplier: 1 },
-      'Lucky_Strike': { username: 'Lucky_Strike', role: 'USER', banned: false, balance: 350, level: 2, xp: 100, premiumLevel: 0, miningLevel: 0, inventoryCount: 1, lastLogin: new Date().toISOString(), inbox: [], stats: { totalSpent: 0, totalValue: 0, casesOpened: 0, sessionStart: 0 }, inventory: [], tags: [], luckMultiplier: 1 },
-      'RNG_God': { username: 'RNG_God', role: 'USER', banned: false, balance: 220, level: 1, xp: 50, premiumLevel: 0, miningLevel: 0, inventoryCount: 0, lastLogin: new Date().toISOString(), inbox: [], stats: { totalSpent: 0, totalValue: 0, casesOpened: 0, sessionStart: 0 }, inventory: [], tags: [], luckMultiplier: 1 },
-  }
+  // Real DB - Empty now (No Bots)
+  userDatabase: {}
 };

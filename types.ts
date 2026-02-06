@@ -79,6 +79,7 @@ export interface PlayerStats {
   legendariesPulled: number;
   mythicsPulled: number;
   contrabandsPulled: number;
+  totalGamesPlayed: number; // New metric for leveling
 }
 
 export interface PromoCode {

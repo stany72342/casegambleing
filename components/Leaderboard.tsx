@@ -1,5 +1,5 @@
 import React from 'react';
-import { GameState } from '../types';
+import { GameState, UserAccount } from '../types';
 import { Trophy, Medal, User } from 'lucide-react';
 
 interface LeaderboardProps {
@@ -9,7 +9,7 @@ interface LeaderboardProps {
 export const Leaderboard: React.FC<LeaderboardProps> = ({ gameState }) => {
   
   // Calculate dynamic stats for all users in the database
-  const allPlayers = Object.values(gameState.userDatabase).map(user => {
+  const allPlayers = (Object.values(gameState.userDatabase || {}) as UserAccount[]).map(user => {
       // Calculate inventory value roughly (some users might not have full inventory loaded in memory if strictly typed, 
       // but for this state structure, userDatabase contains inventory arrays)
       const inventoryValue = (user.inventory || []).reduce((acc, item) => acc + item.value, 0);
@@ -65,6 +65,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ gameState }) => {
                             <span className={`font-bold flex items-center gap-2 ${player.isMe ? 'text-yellow-400' : 'text-white'}`}>
                                 {player.name} {player.isMe && '(You)'}
                                 {player.role === 'ADMIN' || player.role === 'OWNER' ? <span className="text-[10px] bg-red-600 text-white px-1 rounded">STAFF</span> : null}
+                                {player.role === 'MOD' ? <span className="text-[10px] bg-green-600 text-white px-1 rounded">MOD</span> : null}
                             </span>
                         </div>
                     </div>

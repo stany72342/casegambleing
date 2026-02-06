@@ -27,7 +27,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab, gameState, o
     }).format(num);
   };
 
-  const isCasinoActive = ['casino', 'blackjack', 'roulette', 'mines', 'slots', 'coinflip', 'highlow', 'plinko', 'dice', 'rps'].includes(currentTab);
+  const isCasinoActive = ['casino', 'blackjack', 'roulette', 'mines', 'slots', 'coinflip', 'highlow', 'plinko'].includes(currentTab);
 
   const navItems = [
     { id: 'cases', label: 'Cases', icon: LayoutDashboard },

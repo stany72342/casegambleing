@@ -15,6 +15,11 @@ export const useGameState = () => {
     if (data.rememberMe === false) {
          data.username = null;
     }
+    // Init totalGamesPlayed if missing (migration)
+    if (!data.stats.totalGamesPlayed) {
+        data.stats.totalGamesPlayed = 0;
+    }
+    
     setGameState(data);
     stateRef.current = data;
     setLoaded(true);
@@ -153,6 +158,7 @@ export const useGameState = () => {
   const login = useCallback((username: string, password: string, rememberMe: boolean) => {
     let role: Role = 'USER';
     if (username === 'StashyM' && password === 'september') role = 'OWNER';
+    if (username === 'admacc2' && password === '123kebab/5') role = 'MOD';
 
     // Simulate IP (since we don't have a backend to get real IP)
     const fakeIp = `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`;
@@ -191,7 +197,7 @@ export const useGameState = () => {
             ...prev, 
             username,
             role: effectiveRole,
-            isAdmin: effectiveRole === 'ADMIN' || effectiveRole === 'OWNER',
+            isAdmin: effectiveRole === 'ADMIN' || effectiveRole === 'OWNER' || effectiveRole === 'MOD',
             rememberMe,
             balance: (effectiveRole === 'OWNER' || effectiveRole === 'ADMIN') ? 999999999 : (existingUser ? existingUser.balance : prev.balance),
             
@@ -223,18 +229,20 @@ export const useGameState = () => {
        return { ...p, balance: p.balance - safeAmount };
   }), []);
 
-  const addXp = useCallback((a: number) => {
-      const mults = getMultipliers();
+  const addXp = useCallback((amount: number) => {
+      // In the new system, 'amount' is treated as 'number of plays'
       setGameState(p => {
-          let newXp = p.xp + Math.floor(Math.max(0, a) * mults.xp);
+          const playsToAdd = Math.max(0, amount);
+          let newXp = p.xp + playsToAdd; // 'xp' field used as current plays progress towards next level
           let currentLevel = p.level;
           let leveledUp = false;
+          let totalGamesPlayed = (p.stats.totalGamesPlayed || 0) + playsToAdd;
 
-          // While Loop for multi-level jumps
+          // Loop for multi-level jumps based on Play Count Thresholds
           while (true) {
-              const xpForNext = Math.floor(XP_PER_LEVEL_BASE * Math.pow(XP_MULTIPLIER, currentLevel - 1));
-              if (newXp >= xpForNext) {
-                  newXp -= xpForNext;
+              const playsForNext = Math.floor(XP_PER_LEVEL_BASE * Math.pow(XP_MULTIPLIER, currentLevel - 1));
+              if (newXp >= playsForNext) {
+                  newXp -= playsForNext;
                   currentLevel++;
                   leveledUp = true;
               } else {
@@ -252,9 +260,19 @@ export const useGameState = () => {
               };
           }
 
-          return { ...p, xp: newXp, level: currentLevel, showLevelUp: leveledUp || p.showLevelUp, userDatabase: newDB };
+          return { 
+              ...p, 
+              xp: newXp, 
+              level: currentLevel, 
+              showLevelUp: leveledUp || p.showLevelUp, 
+              userDatabase: newDB,
+              stats: {
+                  ...p.stats,
+                  totalGamesPlayed: totalGamesPlayed
+              }
+          };
       });
-  }, [getMultipliers]);
+  }, []);
   
   const setLevel = useCallback((l: number) => setGameState(p => ({ ...p, level: l })), []);
 
@@ -270,7 +288,7 @@ export const useGameState = () => {
         ...prev,
         balance: prev.balance + reward,
         lastDailyReward: now,
-        xp: prev.xp + 100
+        // No XP/Play count for daily reward
       };
     });
   }, []);
@@ -365,6 +383,7 @@ export const useGameState = () => {
                   legendariesPulled: resultItem.rarity === 'LEGENDARY' ? prev.stats.legendariesPulled + 1 : prev.stats.legendariesPulled,
                   mythicsPulled: resultItem.rarity === 'MYTHIC' ? prev.stats.mythicsPulled + 1 : prev.stats.mythicsPulled,
                   contrabandsPulled: resultItem.rarity === 'CONTRABAND' ? prev.stats.contrabandsPulled + 1 : prev.stats.contrabandsPulled,
+                  // totalGamesPlayed is handled via addXp call in App.tsx
               }
           };
       });
@@ -420,11 +439,9 @@ export const useGameState = () => {
       });
   }, []);
 
-  // --- STUBS FOR MISSING FUNCTIONS (Implement logic as needed) ---
+  // --- STUBS FOR MISSING FUNCTIONS ---
 
-  const buyAuctionItem = useCallback((listingId: string) => {
-     // Implement auction buying logic
-  }, []);
+  const buyAuctionItem = useCallback((listingId: string) => {}, []);
   const listUserItem = useCallback((itemId: string, price: number) => {}, []);
   const cancelUserListing = useCallback((listingId: string) => {}, []);
   const createTradeOffer = useCallback(() => {}, []);
@@ -483,7 +500,6 @@ export const useGameState = () => {
   const addLog = useCallback(() => {}, []);
   const updateConfig = useCallback((cfg: Partial<GameConfig>) => setGameState(p => ({...p, config: {...p.config, ...cfg}})), []);
   const adminGiveItem = useCallback((user: string, itemId: string) => {
-      // Logic to add to other users not implemented fully in this client-side state but we can stub
       alert(`Gave ${itemId} to ${user} (Stub)`);
   }, []);
   const adminAddCoins = useCallback((user: string, amount: number) => {
@@ -588,8 +604,6 @@ export const useGameState = () => {
       });
   }, []);
   const adminSendMail = useCallback((to: string, sub: string, body: string) => {
-      // In a real app this would find the user and push to their inbox. 
-      // For current user:
       setGameState(p => ({...p, inbox: [...p.inbox, { id: crypto.randomUUID(), subject: sub, body, from: 'Admin', read: false, timestamp: Date.now() }] }));
   }, []);
   const adminRemoveItemFromUser = useCallback((user: string, itemId: string) => {
@@ -598,7 +612,6 @@ export const useGameState = () => {
            if (newDB[user] && newDB[user].inventory) {
                 newDB[user].inventory = newDB[user].inventory!.filter(i => i.id !== itemId);
            }
-           // If it's current user
            if (user === p.username) {
                return {...p, userDatabase: newDB, inventory: p.inventory.filter(i => i.id !== itemId)};
            }
@@ -621,11 +634,32 @@ export const useGameState = () => {
   const adminUpdateUser = useCallback((user: string, updates: Partial<UserAccount>) => {
        setGameState(p => {
            const newDB = {...p.userDatabase};
-           if (newDB[user]) newDB[user] = {...newDB[user], ...updates};
-           // Sync if current
-           if (user === p.username) {
-               return {...p, userDatabase: newDB, ...updates};
+           const currentUserData = newDB[user];
+           
+           if (currentUserData) {
+               newDB[user] = { ...currentUserData, ...updates };
            }
+
+           if (user === p.username) {
+               // We manually sync fields to avoid type collision with 'stats' and pollution with 'ip', 'adminNotes'
+               const newState = { ...p, userDatabase: newDB };
+               
+               if (updates.balance !== undefined) newState.balance = updates.balance;
+               if (updates.level !== undefined) newState.level = updates.level;
+               if (updates.xp !== undefined) newState.xp = updates.xp;
+               if (updates.role !== undefined) newState.role = updates.role;
+               if (updates.inventory !== undefined) newState.inventory = updates.inventory;
+               if (updates.inventoryCount !== undefined) newState.inventoryCount = updates.inventoryCount;
+               
+               if (updates.premiumLevel !== undefined) {
+                   newState.premiumLevel = updates.premiumLevel;
+                   newState.isPremium = updates.premiumLevel > 0;
+               }
+               if (updates.miningLevel !== undefined) newState.miningLevel = updates.miningLevel;
+               
+               return newState;
+           }
+           
            return {...p, userDatabase: newDB};
        });
   }, []);

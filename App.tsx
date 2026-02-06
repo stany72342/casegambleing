@@ -10,8 +10,6 @@ import { Mines } from './components/Mines';
 import { CoinFlip } from './components/CoinFlip';
 import { HighLow } from './components/HighLow';
 import { Plinko } from './components/Plinko';
-import { Dice } from './components/Dice';
-import { RPS } from './components/RPS';
 import { Shop } from './components/Shop';
 import { Login } from './components/Login';
 import { AdminPanel } from './components/AdminPanel';
@@ -115,13 +113,19 @@ const App = () => {
     reportUser
   } = useGameState();
 
+  // Helper for tracking plays
+  const recordPlay = () => {
+      addXp(1); // 1 Play = 1 XP Unit in new system
+  };
+
   const handleCaseOpen = (caseId: string) => {
     const item = openCase(caseId); 
+    if (item) recordPlay();
     return item;
   };
 
   const handleWinItem = (templateId: string) => {
-      addXp(10);
+      // Logic handled in openCase, this is visual callback
   };
 
   const handleUpgradeAttempt = (itemId: string, targetTemplateId: string, chance: number) => {
@@ -131,7 +135,8 @@ const App = () => {
       removeItem(itemId); 
       if (success) {
           addItem(targetTemplateId);
-          addXp(50);
+          // Upgrade does not count as a 'play' in this new system, or maybe it should?
+          // User said "games played". Let's assume upgrade isn't a casino game.
           return true;
       }
       return false;
@@ -141,7 +146,6 @@ const App = () => {
       if (gameState.balance >= price) {
           removeBalance(price);
           addItem(template.id);
-          addXp(5);
           alert(`You bought ${template.name}!`);
       }
   };
@@ -244,7 +248,7 @@ const App = () => {
       
       {/* Level Up Modal */}
       {gameState.showLevelUp && (
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-md animate-in fade-in">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md animate-in fade-in">
               <div className="bg-slate-900 border-2 border-yellow-500 p-10 rounded-3xl text-center shadow-[0_0_100px_rgba(234,179,8,0.5)] max-w-md w-full relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-t from-yellow-900/20 to-transparent"></div>
                   <Icons.Star size={80} className="text-yellow-400 mx-auto mb-6 animate-bounce drop-shadow-lg" />
@@ -259,7 +263,7 @@ const App = () => {
                   </div>
                   <button 
                     onClick={() => setGameState(prev => ({ ...prev, showLevelUp: false }))}
-                    className="w-full py-4 bg-yellow-500 hover:bg-yellow-400 text-black font-black rounded-xl text-xl shadow-lg transition-transform hover:scale-105 active:scale-95 cursor-pointer relative z-50"
+                    className="w-full py-4 bg-yellow-500 hover:bg-yellow-400 text-black font-black rounded-xl text-xl shadow-lg transition-transform hover:scale-105 active:scale-95"
                   >
                       AWESOME!
                   </button>
@@ -474,7 +478,7 @@ const App = () => {
                       gameState={gameState}
                       onGameEnd={(amount) => {
                           addBalance(amount);
-                          addXp(15);
+                          recordPlay();
                       }}
                       removeBalance={removeBalance}
                   />
@@ -490,7 +494,7 @@ const App = () => {
                       gameState={gameState}
                       onWin={(amount) => {
                           addBalance(amount);
-                          addXp(20);
+                          recordPlay();
                       }}
                       removeBalance={removeBalance}
                   />
@@ -506,7 +510,7 @@ const App = () => {
                       gameState={gameState}
                       onGameEnd={(amount) => {
                           addBalance(amount);
-                          addXp(25);
+                          // No XP for Mines
                       }}
                       removeBalance={removeBalance}
                   />
@@ -522,7 +526,7 @@ const App = () => {
                       gameState={gameState}
                       onSpinResult={(amount) => {
                           addBalance(amount);
-                          addXp(5);
+                          recordPlay();
                       }}
                       removeBalance={removeBalance}
                   />
@@ -538,7 +542,7 @@ const App = () => {
                       gameState={gameState}
                       onWin={(amount) => {
                           addBalance(amount);
-                          addXp(10);
+                          recordPlay();
                       }}
                       removeBalance={removeBalance}
                   />
@@ -554,7 +558,7 @@ const App = () => {
                       gameState={gameState}
                       onGameEnd={(amount) => {
                           addBalance(amount);
-                          addXp(15);
+                          recordPlay();
                       }}
                       removeBalance={removeBalance}
                   />
@@ -570,51 +574,19 @@ const App = () => {
                       gameState={gameState}
                       onWin={(amount) => {
                           addBalance(amount);
-                          addXp(15);
+                          // No XP for Plinko
                       }}
                       removeBalance={removeBalance}
                   />
               </div>
-          )}
-
-          {currentTab === 'dice' && (
-              <div className="space-y-4">
-                  <button onClick={() => setTab('casino')} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
-                      <Icons.ArrowLeft size={20} /> Back to Casino
-                  </button>
-                  <Dice
-                      gameState={gameState}
-                      onWin={(amount) => {
-                          addBalance(amount);
-                          addXp(10);
-                      }}
-                      removeBalance={removeBalance}
-                  />
-              </div>
-          )}
-
-          {currentTab === 'rps' && (
-              <div className="space-y-4">
-                  <button onClick={() => setTab('casino')} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
-                      <Icons.ArrowLeft size={20} /> Back to Casino
-                  </button>
-                  <RPS
-                      gameState={gameState}
-                      onWin={(amount) => {
-                          addBalance(amount);
-                          addXp(10);
-                      }}
-                      removeBalance={removeBalance}
-                  />
-              </div>
-          )}
-
-          {currentTab === 'leaderboard' && (
-              <Leaderboard gameState={gameState} />
           )}
 
           {currentTab === 'stats' && (
               <Stats gameState={gameState} onRedeemCode={redeemPromoCode} />
+          )}
+
+          {currentTab === 'leaderboard' && (
+              <Leaderboard gameState={gameState} />
           )}
 
           {currentTab === 'catalog' && (

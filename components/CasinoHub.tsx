@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dice5, CircleDot, Bomb, Coins, ArrowRight, CircleDollarSign, ArrowUp, LayoutGrid, Scissors, Dna } from 'lucide-react';
+import { Dice5, CircleDot, Bomb, Coins, ArrowRight, CircleDollarSign, ArrowUp, LayoutGrid, Dna } from 'lucide-react';
 
 interface CasinoHubProps {
   onSelectGame: (gameId: string) => void;
@@ -38,28 +38,6 @@ export const CasinoHub: React.FC<CasinoHubProps> = ({ onSelectGame }) => {
       textColor: 'text-indigo-400',
       minBet: '$100',
       maxWin: 'Unlimited',
-      levelReq: 0
-    },
-    {
-      id: 'dice',
-      name: 'Dice',
-      description: 'Slide to adjust your win chance and multiplier.',
-      icon: Dna,
-      color: 'from-cyan-600 to-blue-900',
-      textColor: 'text-cyan-400',
-      minBet: '$10',
-      maxWin: '98x',
-      levelReq: 0
-    },
-    {
-      id: 'rps',
-      name: 'RPS',
-      description: 'Rock, Paper, Scissors. Beat the house.',
-      icon: Scissors,
-      color: 'from-orange-600 to-red-900',
-      textColor: 'text-orange-400',
-      minBet: '$50',
-      maxWin: '2x',
       levelReq: 0
     },
     {
